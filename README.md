@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 typora-root-url: ./
 ---
@@ -61,3 +62,6 @@ typora-root-url: ./
 2. 当单元格已经翻开时
 
     CF+回车：表示测试C行F列
+=======
+# tmine
+>>>>>>> origin/main
