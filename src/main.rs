@@ -1057,8 +1057,6 @@ enum GameResult{
 struct SharePos{
 	time_pos_x:u16,
 	time_pos_y:u16,
-	cmd_pos_x:u16,
-	cmd_pos_y:u16
 }
 use std::sync::mpsc::{channel, Sender, Receiver};
 use std::thread;
@@ -1076,13 +1074,11 @@ fn main() -> io::Result<()> {
 	// Create a channel to control the timer by main thread.
     let (ch_sender, ch_receiver): (Sender<TimerStatus>, Receiver<TimerStatus>) = channel();
 
-	// Get cmd display position
-	let (mut x, mut y) = game.get_cmd_pos();
 	// Get time consuming display postition
 	let (mut x_t,mut y_t)=game.get_stat_time_pos();
 
 	// Create a variable to share the position between the main thread and the timer thread.
-	let shared_var = Arc::new(Mutex::new(SharePos{time_pos_x:x_t,time_pos_y:y_t,cmd_pos_x:x,cmd_pos_y:y}));
+	let shared_var = Arc::new(Mutex::new(SharePos{time_pos_x:x_t,time_pos_y:y_t }));
 
 	let shared_var_clone = shared_var.clone();
 	
@@ -1151,12 +1147,6 @@ fn main() -> io::Result<()> {
 				// when press a key,will send Press and Release 2 events ,so one char will repeat 
 				// two times,to avoid it here only deal with the Press event, do nothing when key released. 
 				if kind==KeyEventKind::Release { continue;}; 
-
-				// Clear the history cmd display
-				// if cmd.len()==0{
-				// 	print!("     ");
-        		// 	game.move_to(x+7, y); //cursor to cmd input postion
-				// }
 				
 				// Can not input more than 3 char.
 				if cmd.len()>=3 { continue;}
@@ -1273,13 +1263,10 @@ fn main() -> io::Result<()> {
 								// so must inform the timer the new size. 
 
 								// get the new position that the timer will use.
-								(x, y) = game.get_cmd_pos();
 								(x_t,y_t)=game.get_stat_time_pos();
 								// get the lock of shared_var
 								let mut sh_pos = shared_var.lock().unwrap();
 								// modify the values of shared_var to inform the timer that game size has changed
-								sh_pos.cmd_pos_x=x;
-								sh_pos.cmd_pos_y=y;
 								sh_pos.time_pos_x=x_t;
 								sh_pos.time_pos_y=y_t;
 								// must release the lock of shared_var
@@ -1304,8 +1291,7 @@ fn main() -> io::Result<()> {
 			Event::Key(KeyEvent { code: KeyCode::Backspace,kind, .. }) => {
 				//print!("\u{8}\u{8}");//退格
 				if kind==KeyEventKind::Release { continue;}; 
-				// save the current cursor position
-				//let (col, row) = cursor::position().unwrap();
+			
 				// deal with the reverse display
 				if cmd.len()>0 && !game_is_pause_or_finished{
 					let c1=cmd.chars().nth(0).unwrap();
@@ -1338,14 +1324,9 @@ fn main() -> io::Result<()> {
 						}
 					}
 				}
-				// game.move_to(col, row);
-				// if cmd.len()==0{
-				// 	print!("     ");
-        		// 	game.move_to(x+7, y); //cursor to cmd input postion
-				// }
+				
 				cmd.pop(); //删除最后一个字符 / delete the last char of cmd string
 				game.echo_cmd(&cmd);
-				//print!("{} ", cmd);
 
 				game.stdout.flush().expect("Failed to flush output");
 			}
