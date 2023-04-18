@@ -100,6 +100,7 @@ Simple Operate example:
 1. 当单元格未翻开时/When cell is not opened
 
     CF+回车：表示翻开C行F列
+    
     CF+Enter: Means Dig the cell.Equal to CFD+Enter
 
 2. 当单元格已经翻开时/When cell is opened
