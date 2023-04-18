@@ -298,7 +298,7 @@ impl Game {
 	}
     // 计算（x,y）单元格周围的雷数
     // Calculte surrounding mines of the cell (x,y) 
-    fn calc_mines(&self,x: &usize, y: &usize) -> i8 {
+    fn calc_mines_1cell(&self,x: &usize, y: &usize) -> i8 {
         let mine_arr=&self.mine_table;
     
         let max_x = mine_arr[0].len();
@@ -318,11 +318,11 @@ impl Game {
         return sum;
     }
 	//计算周围雷数 / calculate the surrounding mines of cur cell
-	fn calc_surrnd_mines(&mut self) {
+	fn calc_surrnd_mines_all(&mut self) {
 		for i in 0..self.mine_table.len() {
 			for j in 0..self.mine_table[i].len() {
 				if self.mine_table[i][j].is_mine == false {
-					self.mine_table[i][j].surrnd_mines = self.calc_mines(&j, &i);
+					self.mine_table[i][j].surrnd_mines = self.calc_mines_1cell(&j, &i);
 				}
 			}
 		}
@@ -370,16 +370,6 @@ impl Game {
 		}
 	}
 
-	// Display info of success
-	fn display_success(&mut self){
-		self.update_mine_left_disp();
-		let (x,y)=self.get_table_mid_pos(); // get the center position of the table UI.
-		self.move_to(x-4, y-1);
-		print!("\x1B[32m\x1B[5m\x1B[1m您胜利了!\n\x1B[0m");
-		self.move_to(x-4, y);
-		print!("\x1B[32m\x1B[5m\x1B[1mYou won !\n\x1B[0m");
-		self.stdout.flush().unwrap();
-	}
 
 	//失败，画面爆炸 / display info of game failed
 	fn display_failed(&mut self) {
@@ -390,6 +380,16 @@ impl Game {
         self.move_to(x-4, y);
 		print!("\x1B[31m\x1B[5m\x1B[1mYou failed!\x1B[0m");
 
+		self.stdout.flush().unwrap();
+	}
+	// Display info of success
+	fn display_success(&mut self){
+		self.update_mine_left_disp();
+		let (x,y)=self.get_table_mid_pos(); // get the center position of the table UI.
+		self.move_to(x-4, y-1);
+		print!("\x1B[32m\x1B[5m\x1B[1m您胜利了!\n\x1B[0m");
+		self.move_to(x-4, y);
+		print!("\x1B[32m\x1B[5m\x1B[1mYou won !\n\x1B[0m");
 		self.stdout.flush().unwrap();
 	}
 	// 翻开单元格 / Dig cell function
@@ -680,10 +680,18 @@ impl Game {
 		let (x,y)=self.get_cmd_pos();
 		self.move_to(x+7, y);
 		// clear history cmd.
-		print!("              ");
+		print!("   ");
 		self.move_to(x+7, y);
-		print!("{} ",*cmd);
+		print!("{}",*cmd);
 		self.stdout.flush().unwrap();
+	}
+	//计算命令提示信息打印位置 / get the  UI position of cmd to output
+	fn get_cmd_pos(&self) -> (u16, u16) {
+		return ( (4 * self.level.cols + 6) as u16,((self.level.rows + 1) * 2) as u16, );
+	}
+	//计算帮助信息打印位置 /get the UI position of "Help" info to print
+	fn get_help_pos(&self) -> (u16, u16) {
+		return ((4 * self.level.cols + 6) as u16, 4);
 	}
     //产生随机数
     fn get_rand(range: usize) -> usize {
@@ -697,14 +705,6 @@ impl Game {
 	//计算耗时显示信息打印位置 / get the UI position of "Time consuming" info to print
 	fn get_stat_time_pos(&self) -> (u16, u16) {
 		return ((4 * self.level.cols + 6) as u16, 1);
-	}
-	//计算帮助信息打印位置 /get the UI position of "Help" info to print
-	fn get_help_pos(&self) -> (u16, u16) {
-		return ((4 * self.level.cols + 6) as u16, 4);
-	}
-	//计算命令提示信息打印位置 / get the  UI position of cmd to output
-	fn get_cmd_pos(&self) -> (u16, u16) {
-		return ( (4 * self.level.cols + 6) as u16,((self.level.rows + 1) * 2) as u16, );
 	}
 
 	// 获取屏幕表格中间位置，用于显示游戏结果信息 
@@ -900,7 +900,7 @@ impl Game {
 
 	}	
 
-
+	// reverse display the cell
     fn rever_disp_cell(&mut self,x: &usize, y: &usize) {
         let (x1, y1) = Game::pos_from_index(*x as u16, *y as u16);
         self.move_to(x1-1, y1);
@@ -1035,7 +1035,7 @@ fn new_game(level:u8) -> Game {
 
 	// Initialize the game
 	game.laying_mine();
-	game.calc_surrnd_mines();
+	game.calc_surrnd_mines_all();
 	game.draw_ui();
 	enable_raw_mode().expect("Failed to enable raw mode");
 	return game;
@@ -1157,6 +1157,10 @@ fn main() -> io::Result<()> {
 				// 	print!("     ");
         		// 	game.move_to(x+7, y); //cursor to cmd input postion
 				// }
+				
+				// Can not input more than 3 char.
+				if cmd.len()>=3 { continue;}
+
 				cmd += c.to_ascii_uppercase().to_string().as_str();
 				//print!("{} ", cmd);
 				game.echo_cmd(&cmd);
@@ -1208,13 +1212,13 @@ fn main() -> io::Result<()> {
 					}
 					// confirm c_x,c_y is uppercase letter
 					if c_y >='A' && c_y <='Z' && c_x >= 'A' && c_x <= 'Z' {
-						//确保输入的是A以上的字母 / Ensure the input char is ABCDE...
 						let col = c_x as usize - 65;  // 65 is the char 'A'
 						let row = c_y as usize - 65;  
-						//确保未超最大行列 / Ensure row and column input is below the most table index.
-						if col < game.level.cols && row < game.level.rows && !game_is_pause_or_finished{
+						// 确保未超最大行列 / Ensure row and column input is below the most table index.
+						if col < game.level.cols && row < game.level.rows 
+						&& !game_is_pause_or_finished {
 							game.dig_cell(&col, &row, &c_cmd); //挖开此单元格 / Begin dig cell
-							if game.status==GameStatus::NotStart{ //如果是第一个单元格，开始计时 / if the first cmd ,start timer.
+							if game.status==GameStatus::NotStart && (c_cmd=='D' || c_cmd==' ') { //如果是第一个单元格，开始计时 / if the first cmd ,start timer.
 								//开始计时 / Start timer
 								game.status=GameStatus::Started;
 								ch_sender.send(TimerStatus::Start).unwrap();
@@ -1373,6 +1377,8 @@ fn main() -> io::Result<()> {
 	execute!(std::io::stdout(), Show).unwrap();
 	//关闭raw mode / disable raw mode
 	disable_raw_mode().expect("Failed to enable raw mode");
-	clear_screen();
+	let (_,y)=game.get_cmd_pos();
+	game.move_to(0, y+2);
+	//clear_screen();
 	Ok(())
 }
