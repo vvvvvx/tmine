@@ -73,17 +73,19 @@ Command example:
 
 - CED+Enter：表示翻开C行E列单元格  [ 可 简化操作 ]/[May simple operate]
 
-            Means Dig the cell of C-row and E-column
+    Means Dig the cell of C-row and E-column
 
 - CEF+Enter：表示标记C行E列单元格为雷 
 
-            Means Mark the cell of C-row and E-column the mine.
+    Means Mark the cell of C-row and E-column the mine.
 
 - CET+Enter：表示测试C行E列单元格  [ 可 简化操作 ]/[May simple operate]
-            Means Test the cell of C-row and E-column the mine.
+
+    Means Test the cell of C-row and E-column the mine.
 
 - CEP+Enter：表示标记C行E列为问号
-            Means Mark Pending the cell of C-row and E-column the mine.
+
+    Means Mark Pending the cell of C-row and E-column the mine.
 
 ## 简化操作/Simple Operate
 
