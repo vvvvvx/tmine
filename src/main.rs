@@ -828,7 +828,7 @@ impl Game {
 
 		// Not Over
 		// 如果不满足："已翻开总数+总雷数==格子总数"，则未胜利，返回。
-		// if not match:“opened cells + sum of mines == sum of all cells”,not success,return
+		// if not match:“opened cells + sum of mines == sum of all cells”,game is not over,return
 		if self.level.mines as usize + opened != cells_sum { 
 			return GameResult::NotOver; 
 		}
@@ -953,24 +953,24 @@ impl Game {
     }
 
 	fn get_row_from_char(&self,c:&char)->i16{
-		let c1=c.to_ascii_uppercase() as u8;
+		let c1=c.to_ascii_uppercase();
 
-		if !(c1>=65 && c1<=(65+25)){
+		if !(c1>='A' && c1<='Z'){
 			return -1;
 		}
-		let row=c1-65;
+		let row=c1 as u8 -65;
 		if row as usize>= self.level.rows{
 			return -1;
 		}
 		return row as i16;
 	}
 	fn get_col_from_char(&self,c:&char)->i16{
-		let c1=c.to_ascii_uppercase() as u8;
+		let c1=c.to_ascii_uppercase() ;
 
-		if !(c1>=65 && c1<=(65+25)){
+		if !(c1>='A' && c1<='Z'){
 			return -1;
 		}
-		let row=c1-65;
+		let row=c1 as u8 -65;
 		if row as usize>= self.level.cols{
 			return -1;
 		}
@@ -985,7 +985,7 @@ impl Game {
 			return (-1,-1);
 		}
 		let c1=cmd.chars().nth(0).unwrap();
-		if !(c1 as u8>=65 && c1 as u8 <= 65+25){
+		if !(c1 >='A' && c1 <= 'Z'){
 			return (-1,-1);
 		} 
 		match len {
@@ -1135,7 +1135,7 @@ fn main() -> io::Result<()> {
 		//match read().expect("Failed to read event") {
 		match ev {
 			Event::Key(KeyEvent { code: KeyCode::Char(c),kind,.. }) => {
-				// 按下一个键会同时发送Press和Release两个Event,所以会收到重复字符，仅处理Release类型。
+				// 按下一个键会同时发送Press和Release两个Event,所以会收到重复字符，仅接收Press事件类型。
 				// when press a key,will send Press and Release 2 events ,so one char will repeat 
 				// two times,to avoid it here only deal with the Press event, do nothing when Release key. 
 				if kind==KeyEventKind::Release { continue;}; 
@@ -1148,12 +1148,11 @@ fn main() -> io::Result<()> {
 				print!("{} ", cmd);
 
 				let c1=cmd.chars().nth(0).unwrap();
-				//if !(game.status==GameStatus::Paused || game.status==GameStatus::Finished) {
 				if !game_is_pause_or_finished{
 					match cmd.len() {
 						// reverse display row
 						1=>{
-							if c1 as u8>=65 && c1 as u8<=(65+25){
+							if c1 >='A' && c1 <='Z'{
 								let row=game.get_row_from_char(&c);
 								if row!=-1{
 									game.rever_disp_row(row as u16);
@@ -1162,10 +1161,10 @@ fn main() -> io::Result<()> {
 						}
 						// reverse display column
 						2=>{
-							let c1=cmd.chars().nth(0).unwrap() as u8;
+							let c1=cmd.chars().nth(0).unwrap() ;
 							let col=game.get_col_from_char(&c);
-							let row=(c1-65) as usize;
-							if col!=-1 && (c1>=65 && c1<=(65+25)) && row<game.level.rows{
+							let row=(c1 as u8-65) as usize;
+							if col!=-1 && c1 >='A' && c1 <='Z' && row<game.level.rows{
 								game.rever_disp_col(col as u16);
 							}
 						}
@@ -1193,12 +1192,11 @@ fn main() -> io::Result<()> {
 						c_cmd = cmd.chars().nth(2).unwrap(); //命令字符 / The cmd char,like D-Dig,F-Flag,P-Pending,T-Test
 					}
 					// confirm c_x,c_y is uppercase letter
-					if c_y as u8>=65 && c_y as u8 <=65+25 && c_x as u8 >= 65 && c_x as u8 <= 65+25 {
+					if c_y >='A' && c_y <='Z' && c_x >= 'A' && c_x <= 'Z' {
 						//确保输入的是A以上的字母 / Ensure the input char is ABCDE...
 						let x = c_x as usize - 65;  // 65 is the char 'A'
 						let y = c_y as usize - 65;  
 						//确保未超最大行列 / Ensure row and column input is below the most table index.
-						//if x < game.level.cols && y < game.level.rows && !(game.status==GameStatus::Paused || game.status==GameStatus::Finished){
 						if x < game.level.cols && y < game.level.rows && !game_is_pause_or_finished{
 							game.dig_cell(&x, &y, &c_cmd); //挖开此单元格 / Begin dig cell
 							if game.status==GameStatus::NotStart{ //如果是第一个单元格，开始计时 / if the first cmd ,start timer.
@@ -1210,26 +1208,28 @@ fn main() -> io::Result<()> {
 					}
 					if c_y == '!' { // !Command ,like !N=New game ,!Q=Quit,!P=Pause
 						match c_x {
+							//退出程序 / Quit program
 							'Q' => {
-								//退出程序 / Exit program
 								execute!(std::io::stdout(), Show).unwrap();
 								disable_raw_mode().expect("Failed to enable raw mode");
 								exit(0);
 							}
-							'P' => { //暂停游戏 / Pause
+							//暂停游戏 / Pause
+							'P' => { 
 								if game.status==GameStatus::Started {
 									game.pause();
 									tx.send(TimerStatus::Pause).unwrap();
 								}
 							}
-							'R' => { //继续游戏 / Resume
+							//继续游戏 / Resume the game
+							'R' => { 
 								if game.status==GameStatus::Paused{
 									game.resume();
 									tx.send(TimerStatus::Resume).unwrap();
 								}
 							}
+							//新开游戏 / New game with current difficulty
 							'N' => {
-								//新开游戏 / New game
 								let lv=game.level.level;
 								game = new_game(lv);
 								//(x, y) = game.get_cmd_pos();
@@ -1238,21 +1238,27 @@ fn main() -> io::Result<()> {
 								// Stop the timer
 								tx.send(TimerStatus::Stop).unwrap();
 							}
+							// Check error
 							'C' => {
 								game.display_err();
 							}
+							// 换游戏难度 / Change difficulty
 							'D' => {
 								// stop the timer first
 								tx.send(TimerStatus::Stop).unwrap();
-								//换难度 / Change difficulty
+								// 换难度 / Change difficulty
 								game = new_game(0);
 								cmd.clear();
-								// get the new position
+
+								// because thanged the difficulty,the display size has also been changed automaticly.
+								// so must inform the timer the new size. 
+
+								// get the new position that the timer will use.
 								(x, y) = game.get_cmd_pos();
 								(x_t,y_t)=game.get_stat_time_pos();
 								// get the lock of shared_var
 								let mut sh_pos = shared_var.lock().unwrap();
-								// modify the values of shared_var
+								// modify the values of shared_var to inform the timer that game size has changed
 								sh_pos.cmd_pos_x=x;
 								sh_pos.cmd_pos_y=y;
 								sh_pos.time_pos_x=x_t;
@@ -1265,7 +1271,6 @@ fn main() -> io::Result<()> {
 					}
 				}
 				// cancel reversed row and column
-				//if  !(game.status==GameStatus::Paused || game.status==GameStatus::Finished){
 				if  !game_is_pause_or_finished{
 					let (row,col)=game.get_row_col_from_str(&cmd);
 					if row!=-1{
@@ -1283,30 +1288,33 @@ fn main() -> io::Result<()> {
 				// save the current cursor position
 				let (col, row) = cursor::position().unwrap();
 				// deal with the reverse display
-				//if cmd.len()>0 && !(game.status==GameStatus::Paused || game.status==GameStatus::Finished){
 				if cmd.len()>0 && !game_is_pause_or_finished{
 					let c1=cmd.chars().nth(0).unwrap();
 					//if c1!='!'{
 					// if c1 is a letter
-					if c1 as u8 >=65 && c1 as u8 <=(65+25){
+					if c1 >= 'A' && c1 <='Z'{
 						match cmd.len() {
+							// if len==1,cancel row reverse displaying
 							1=>{
 								let row=game.get_row_from_char(&c1);
 								if row!=-1 {
 									game.cancel_rever_row(row as u16);
 								}
 							},
+							// if len==2,cancel col reverse displaying
 							2=>{
 								let c2=cmd.chars().nth(1).unwrap();
 								let col=game.get_col_from_char(&c2);
 								let row=game.get_row_from_char(&c1);
 								if col!=-1{
 									game.cancel_rever_col(col as u16);
+									// re-display the row.otherwise there is a cell not reversed after canceling the column reverse.
 									if row!=-1{
 										game.rever_disp_row(row as u16);
 									}
 								}
 							},
+							// otherwise do nothing
 							_=>{}
 						}
 					}
@@ -1321,10 +1329,7 @@ fn main() -> io::Result<()> {
 				game.stdout.flush().expect("Failed to flush output");
 			}
 			Event::Key(KeyEvent { code: KeyCode::Esc, .. }) => {
-				//disable_raw_mode().expect("Failed to disable raw mode");
-
 				// cancel reverse
-				//if !(game.status==GameStatus::Paused || game.status==GameStatus::Finished) {
 				if !game_is_pause_or_finished {
 					let (row,col)=game.get_row_col_from_str(&cmd);
 					if row!=-1{
