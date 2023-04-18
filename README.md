@@ -1,3 +1,7 @@
+---
+typora-root-url: ./ 
+---
+
 
 
 # TMine键盘扫雷游戏
@@ -45,7 +49,7 @@ CMD:
 
     当此格已经标记为雷，输入同样命令，将取消标记
 
-    when the cell is already marked as a mine,this cmd will un-mark it.
+    when the cell is already marked as a mine,this cmd will un-mark it. 
 
 3. T-Test 测试  [ 可 简化操作 ]/[May simple operate]
 
@@ -68,15 +72,14 @@ CMD:
 Command example:
 
 - CED+Enter：表示翻开C行E列单元格  [ 可 简化操作 ]/[May simple operate]
-- 
+
             Means Dig the cell of C-row and E-column
 
-- CEF+Enter：表示标记C行E列单元格为雷
-- 
+- CEF+Enter：表示标记C行E列单元格为雷 
+
             Means Mark the cell of C-row and E-column the mine.
 
 - CET+Enter：表示测试C行E列单元格  [ 可 简化操作 ]/[May simple operate]
-- 
             Means Test the cell of C-row and E-column the mine.
 
 - CEP+Enter：表示标记C行E列为问号
@@ -103,6 +106,7 @@ Simple Operate example:
 
     CF+Enter:Means Test the cell. Equal to CFT+Enter
     
+
 =======
 # tmine
 >>>>>>> origin/main
