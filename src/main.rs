@@ -74,7 +74,7 @@ impl Timer {
 		};
 
 	}
-	fn update_time_consuming(&self,x:u16,y:u16,pre_x:u16,pre_y:u16){
+	fn update_time_consuming(&self,x:u16,y:u16){
 		let mut stdout=std::io::stdout();
 		//更新耗时显示
 		//let (x,y)=Game::get_stat_time_pos();
@@ -82,7 +82,7 @@ impl Timer {
         stdout.queue(cursor::MoveTo(x+10,y)).unwrap();
 		print!("{}s",self.get_elapsed());
 		stdout.flush().expect("Failed to flush output");
-        stdout.queue(cursor::MoveTo(pre_x,pre_y)).unwrap();
+        //stdout.queue(cursor::MoveTo(pre_x,pre_y)).unwrap();
 
 	}
 }
@@ -273,6 +273,29 @@ impl Game {
 		}
 	}
 
+	// cancel reverse display the row
+	fn cancel_rever_row(&mut self,row:u16){
+		let (x,y)=Game::pos_from_index(0, row);
+		self.move_to(x-1, y);
+		for i in 0..(self.level.cols-1) {
+			self.refresh_cell(&i, &(row as usize));
+			print!("│");
+		}
+		self.refresh_cell(&(self.level.cols-1), &(row as usize));
+		self.stdout.flush().unwrap();
+	}
+	// cancel reverse display the column 
+	fn cancel_rever_col(&mut self,col:u16){
+		for i in 0..(self.level.rows-1) {
+			let (x,y)=Game::pos_from_index(col, i as u16);
+			self.move_to(x-1, y);
+			self.refresh_cell(&(col as usize), &(i as usize));
+			self.move_to(x-1, y+1);
+			print!("───");
+		}
+		self.refresh_cell(&(col as usize), &(self.level.rows -1));
+		self.stdout.flush().unwrap();
+	}
     // 计算（x,y）单元格周围的雷数
     // Calculte surrounding mines of the cell (x,y) 
     fn calc_mines(&self,x: &usize, y: &usize) -> i8 {
@@ -653,6 +676,15 @@ impl Game {
 
 	}
 
+	fn echo_cmd(&mut self,cmd:&String){
+		let (x,y)=self.get_cmd_pos();
+		self.move_to(x+7, y);
+		// clear history cmd.
+		print!("              ");
+		self.move_to(x+7, y);
+		print!("{} ",*cmd);
+		self.stdout.flush().unwrap();
+	}
     //产生随机数
     fn get_rand(range: usize) -> usize {
         let mut rng = rand::thread_rng();
@@ -679,6 +711,52 @@ impl Game {
 	// Get the center position of the table of UI. for displaying result info of game.
 	fn get_table_mid_pos(&self)->(u16,u16){
 		return ( ((4 * self.level.cols+3)/2) as u16,(self.level.rows) as u16);
+	}
+	// convert row index from input char
+	fn get_row_from_char(&self,c:&char)->i16{
+		let c1=c.to_ascii_uppercase();
+
+		if !(c1>='A' && c1<='Z'){
+			return -1;
+		}
+		let row=c1 as u8 -65;
+		if row as usize>= self.level.rows{
+			return -1;
+		}
+		return row as i16;
+	}
+	// convert column index from input char
+	fn get_col_from_char(&self,c:&char)->i16{
+		let c1=c.to_ascii_uppercase() ;
+
+		if !(c1>='A' && c1<='Z'){
+			return -1;
+		}
+		let row=c1 as u8 -65;
+		if row as usize>= self.level.cols{
+			return -1;
+		}
+		return row as i16;
+
+	}
+	// return (row,column)
+	// row or col equal -1 ,means error
+	fn get_row_col_from_str(&self,cmd:&String)->(i16,i16){
+		let len=cmd.len();
+		if len==0{
+			return (-1,-1);
+		}
+		let c1=cmd.chars().nth(0).unwrap();
+		if !(c1 >='A' && c1 <= 'Z'){
+			return (-1,-1);
+		} 
+		match len {
+			1=>{ return (self.get_row_from_char(&c1),-1);}
+			_=>{
+				let c2=cmd.chars().nth(1).unwrap();
+				return (self.get_row_from_char(&c1),self.get_col_from_char(&c2));
+			}
+		}
 	}
 	//随机初始化雷阵 / random init the mine array
 	fn laying_mine(&mut self) {
@@ -797,6 +875,74 @@ impl Game {
 		self.display_refresh();
 		self.status=GameStatus::Started;
 	}
+	// reverse display the row
+	fn rever_disp_row(&mut self,row:u16){
+		let (x,y)=Game::pos_from_index(0, row);
+		self.move_to(x-1, y);
+		for i in 0..(self.mine_table[row as usize].len()-1) {
+			self.rever_disp_cell(&i, &(row as usize));
+			print!("\x1B[42m│\x1B[0m");
+		}
+		self.rever_disp_cell(&(self.level.cols-1), &(row as usize));
+		self.stdout.flush().unwrap();
+	}
+	// reverse display the column
+	fn rever_disp_col(&mut self,col:u16){
+		for i in 0..(self.level.rows-1) {
+			let (x,y)=Game::pos_from_index(col, i as u16);
+			self.move_to(x-1, y);
+			self.rever_disp_cell(&(col as usize), &(i as usize));
+			self.move_to(x-1, y+1);
+			print!("\x1B[42m───\x1B[0m");
+		}
+		self.rever_disp_cell(&(col as usize), &(self.level.rows -1));
+		self.stdout.flush().unwrap();
+
+	}	
+
+
+    fn rever_disp_cell(&mut self,x: &usize, y: &usize) {
+        let (x1, y1) = Game::pos_from_index(*x as u16, *y as u16);
+        self.move_to(x1-1, y1);
+        let c=&self.mine_table[*y][*x];
+        match c.status {
+            Status::Opened => {
+                if !c.is_mine { //如果不是雷 / if the cell is not mine.
+                    if c.surrnd_mines == 0 {
+                        // display three space char with green background:\x1b[42m
+                        print!("\x1b[42m   \x1B[0m");
+                    }
+                    if c.surrnd_mines > 0 {
+                        // if the cell is not mine but its surrounding has mines ,
+                        // display surrounding mines with gray BG and black font
+                        print!("\x1B[42m {} \x1B[0m", c.surrnd_mines);
+                    }
+                } else {
+                    //如果是雷，显示红色“M”，绿色背景 / if the cell is mine ,display 'M' with yellow BG( \x1B[42m ) and Red font ( \x1B[31m )
+                    print!("\x1B[31m\x1B[42m M \x1B[0m");
+                }
+            }
+            Status::Flaged => {
+                // 如果已经标记为雷，显示红色F
+                // if flaged the cell ,dispaly 'F' with gray BG ( \x1B[100m ) and Red font ( \x1B[31m )
+                print!("\x1B[31m\x1B[42m F \x1B[0m");
+            }
+            Status::Pending => {
+                // 如果存疑，显示蓝色问号
+                // if Pending ,dispaly '?' with gray BG and Blue font
+                print!("\x1B[34m\x1B[42m ? \x1B[0m");
+            }
+            Status::Unexplored => { 
+                // unexplored ,with green BG
+                //print!("   ");
+                print!("\x1b[42m   \x1B[0m");
+            }
+            //_=>{ }
+        }
+        self.stdout.flush().unwrap();
+
+    }
+
 	// 检查是否胜利结束 / Check if the game has been successfully ended
 	fn success_check(&mut self)->GameResult{ 
 
@@ -860,141 +1006,6 @@ impl Game {
         self.move_to(x+10, y);
 		print!("{} ", self.mines_left);
 		self.stdout.flush().unwrap();
-	}
-	// reverse display the row
-	fn rever_disp_row(&mut self,row:u16){
-		let (x,y)=Game::pos_from_index(0, row);
-		self.move_to(x-1, y);
-		for i in 0..(self.mine_table[row as usize].len()-1) {
-			self.rever_disp_cell(&i, &(row as usize));
-			print!("\x1B[42m│\x1B[0m");
-		}
-		self.rever_disp_cell(&(self.level.cols-1), &(row as usize));
-		self.stdout.flush().unwrap();
-	}
-	// reverse display the column
-	fn rever_disp_col(&mut self,col:u16){
-		for i in 0..(self.level.rows-1) {
-			let (x,y)=Game::pos_from_index(col, i as u16);
-			self.move_to(x-1, y);
-			self.rever_disp_cell(&(col as usize), &(i as usize));
-			self.move_to(x-1, y+1);
-			print!("\x1B[42m───\x1B[0m");
-		}
-		self.rever_disp_cell(&(col as usize), &(self.level.rows -1));
-		self.stdout.flush().unwrap();
-
-	}	
-
-	// cancel reverse display the row
-	fn cancel_rever_row(&mut self,row:u16){
-		let (x,y)=Game::pos_from_index(0, row);
-		self.move_to(x-1, y);
-		for i in 0..(self.level.cols-1) {
-			self.refresh_cell(&i, &(row as usize));
-			print!("│");
-		}
-		self.refresh_cell(&(self.level.cols-1), &(row as usize));
-		self.stdout.flush().unwrap();
-	}
-	// cancel reverse display the column 
-	fn cancel_rever_col(&mut self,col:u16){
-		for i in 0..(self.level.rows-1) {
-			let (x,y)=Game::pos_from_index(col, i as u16);
-			self.move_to(x-1, y);
-			self.refresh_cell(&(col as usize), &(i as usize));
-			self.move_to(x-1, y+1);
-			print!("───");
-		}
-		self.refresh_cell(&(col as usize), &(self.level.rows -1));
-		self.stdout.flush().unwrap();
-	}
-
-    fn rever_disp_cell(&mut self,x: &usize, y: &usize) {
-        let (x1, y1) = Game::pos_from_index(*x as u16, *y as u16);
-        self.move_to(x1-1, y1);
-        let c=&self.mine_table[*y][*x];
-        match c.status {
-            Status::Opened => {
-                if !c.is_mine { //如果不是雷 / if the cell is not mine.
-                    if c.surrnd_mines == 0 {
-                        // display three space char with green background:\x1b[42m
-                        print!("\x1b[42m   \x1B[0m");
-                    }
-                    if c.surrnd_mines > 0 {
-                        // if the cell is not mine but its surrounding has mines ,
-                        // display surrounding mines with gray BG and black font
-                        print!("\x1B[42m {} \x1B[0m", c.surrnd_mines);
-                    }
-                } else {
-                    //如果是雷，显示红色“M”，绿色背景 / if the cell is mine ,display 'M' with yellow BG( \x1B[42m ) and Red font ( \x1B[31m )
-                    print!("\x1B[31m\x1B[42m M \x1B[0m");
-                }
-            }
-            Status::Flaged => {
-                // 如果已经标记为雷，显示红色F
-                // if flaged the cell ,dispaly 'F' with gray BG ( \x1B[100m ) and Red font ( \x1B[31m )
-                print!("\x1B[31m\x1B[42m F \x1B[0m");
-            }
-            Status::Pending => {
-                // 如果存疑，显示蓝色问号
-                // if Pending ,dispaly '?' with gray BG and Blue font
-                print!("\x1B[34m\x1B[42m ? \x1B[0m");
-            }
-            Status::Unexplored => { 
-                // unexplored ,with green BG
-                //print!("   ");
-                print!("\x1b[42m   \x1B[0m");
-            }
-            //_=>{ }
-        }
-        self.stdout.flush().unwrap();
-
-    }
-
-	fn get_row_from_char(&self,c:&char)->i16{
-		let c1=c.to_ascii_uppercase();
-
-		if !(c1>='A' && c1<='Z'){
-			return -1;
-		}
-		let row=c1 as u8 -65;
-		if row as usize>= self.level.rows{
-			return -1;
-		}
-		return row as i16;
-	}
-	fn get_col_from_char(&self,c:&char)->i16{
-		let c1=c.to_ascii_uppercase() ;
-
-		if !(c1>='A' && c1<='Z'){
-			return -1;
-		}
-		let row=c1 as u8 -65;
-		if row as usize>= self.level.cols{
-			return -1;
-		}
-		return row as i16;
-
-	}
-	// return (row,column)
-	// row or col equal -1 ,means error
-	fn get_row_col_from_str(&self,cmd:&String)->(i16,i16){
-		let len=cmd.len();
-		if len==0{
-			return (-1,-1);
-		}
-		let c1=cmd.chars().nth(0).unwrap();
-		if !(c1 >='A' && c1 <= 'Z'){
-			return (-1,-1);
-		} 
-		match len {
-			1=>{ return (self.get_row_from_char(&c1),-1);}
-			_=>{
-				let c2=cmd.chars().nth(1).unwrap();
-				return (self.get_row_from_char(&c1),self.get_col_from_char(&c2));
-			}
-		}
 	}
 } //impl Game ended
 
@@ -1062,13 +1073,15 @@ fn main() -> io::Result<()> {
 	//开启raw mode,监听键盘输入 / enable raw mode to listen keyboard input.
 	enable_raw_mode().expect("Failed to enable raw mode");
 	// 创建一个通信通道，用于主线程向子线程发送 timer status 变量
-    let (tx, rx): (Sender<TimerStatus>, Receiver<TimerStatus>) = channel();
+	// Create a channel to control the timer by main thread.
+    let (ch_sender, ch_receiver): (Sender<TimerStatus>, Receiver<TimerStatus>) = channel();
 
 	// Get cmd display position
 	let (mut x, mut y) = game.get_cmd_pos();
 	// Get time consuming display postition
 	let (mut x_t,mut y_t)=game.get_stat_time_pos();
-	//let share_pos=SharePos{time_pos_x:x_t,time_pos_y:y_t,cmd_pos_x:x,cmd_pos_y:y};
+
+	// Create a variable to share the position between the main thread and the timer thread.
 	let shared_var = Arc::new(Mutex::new(SharePos{time_pos_x:x_t,time_pos_y:y_t,cmd_pos_x:x,cmd_pos_y:y}));
 
 	let shared_var_clone = shared_var.clone();
@@ -1077,12 +1090,12 @@ fn main() -> io::Result<()> {
 	let mut timer=Timer::new();
 
 	// 启动一个子线程，用于更新耗时信息
-	// run a thread to update time consuming
+	// run a timer thread to update time consuming
     thread::spawn(move || -> ! {
         loop {
 			// Get the command from main thread 
 			let mut status_t=TimerStatus::NotStart;
-			 match rx.try_recv() {
+			 match ch_receiver.try_recv() {
                 Ok(new_status) => {
 					status_t=new_status;
                 },
@@ -1113,13 +1126,12 @@ fn main() -> io::Result<()> {
 			let elapsed = timer.last.elapsed();
         	if elapsed >= update_interval && timer.is_running{
             	timer.last += update_interval;
-				//timer.update_time_consuming(x_t,y_t,x1+7,y1);
 				// use the data of shared_var
-				timer.update_time_consuming(sh_pos.time_pos_x,sh_pos.time_pos_y,sh_pos.cmd_pos_x+7,sh_pos.cmd_pos_y);
+				timer.update_time_consuming(sh_pos.time_pos_x,sh_pos.time_pos_y);
         	}
 			//must release the lock of shared_var
 			drop(sh_pos);
-            // 程序休眠 10 毫秒，以减少 CPU 资源的消耗
+            // 程序休眠 100 毫秒，以减少 CPU 资源的消耗
 			// sleep to reduce the CPU consuming
             sleep(Duration::from_millis(100));
         }
@@ -1128,8 +1140,8 @@ fn main() -> io::Result<()> {
 	// Main thread loop
 	loop {
 
-		(x,y)=game.get_cmd_pos();
-        game.move_to(x+7, y); //cursor to cmd input postion
+		//(x,y)=game.get_cmd_pos();
+        //game.move_to(x+7, y); //cursor to cmd input postion
 		let ev=read().expect("Failed to read event");
 		let game_is_pause_or_finished=game.status==GameStatus::Paused || game.status==GameStatus::Finished;
 		//match read().expect("Failed to read event") {
@@ -1137,15 +1149,17 @@ fn main() -> io::Result<()> {
 			Event::Key(KeyEvent { code: KeyCode::Char(c),kind,.. }) => {
 				// 按下一个键会同时发送Press和Release两个Event,所以会收到重复字符，仅接收Press事件类型。
 				// when press a key,will send Press and Release 2 events ,so one char will repeat 
-				// two times,to avoid it here only deal with the Press event, do nothing when Release key. 
+				// two times,to avoid it here only deal with the Press event, do nothing when key released. 
 				if kind==KeyEventKind::Release { continue;}; 
 
-				if cmd.len()==0{
-					print!("     ");
-        			game.move_to(x+7, y); //cursor to cmd input postion
-				}
+				// Clear the history cmd display
+				// if cmd.len()==0{
+				// 	print!("     ");
+        		// 	game.move_to(x+7, y); //cursor to cmd input postion
+				// }
 				cmd += c.to_ascii_uppercase().to_string().as_str();
-				print!("{} ", cmd);
+				//print!("{} ", cmd);
+				game.echo_cmd(&cmd);
 
 				let c1=cmd.chars().nth(0).unwrap();
 				if !game_is_pause_or_finished{
@@ -1162,6 +1176,7 @@ fn main() -> io::Result<()> {
 						// reverse display column
 						2=>{
 							let c1=cmd.chars().nth(0).unwrap() ;
+							if !c1.is_ascii_uppercase() { continue;}
 							let col=game.get_col_from_char(&c);
 							let row=(c1 as u8-65) as usize;
 							if col!=-1 && c1 >='A' && c1 <='Z' && row<game.level.rows{
@@ -1194,15 +1209,15 @@ fn main() -> io::Result<()> {
 					// confirm c_x,c_y is uppercase letter
 					if c_y >='A' && c_y <='Z' && c_x >= 'A' && c_x <= 'Z' {
 						//确保输入的是A以上的字母 / Ensure the input char is ABCDE...
-						let x = c_x as usize - 65;  // 65 is the char 'A'
-						let y = c_y as usize - 65;  
+						let col = c_x as usize - 65;  // 65 is the char 'A'
+						let row = c_y as usize - 65;  
 						//确保未超最大行列 / Ensure row and column input is below the most table index.
-						if x < game.level.cols && y < game.level.rows && !game_is_pause_or_finished{
-							game.dig_cell(&x, &y, &c_cmd); //挖开此单元格 / Begin dig cell
+						if col < game.level.cols && row < game.level.rows && !game_is_pause_or_finished{
+							game.dig_cell(&col, &row, &c_cmd); //挖开此单元格 / Begin dig cell
 							if game.status==GameStatus::NotStart{ //如果是第一个单元格，开始计时 / if the first cmd ,start timer.
 								//开始计时 / Start timer
 								game.status=GameStatus::Started;
-								tx.send(TimerStatus::Start).unwrap();
+								ch_sender.send(TimerStatus::Start).unwrap();
 							}
 						}
 					}
@@ -1218,14 +1233,14 @@ fn main() -> io::Result<()> {
 							'P' => { 
 								if game.status==GameStatus::Started {
 									game.pause();
-									tx.send(TimerStatus::Pause).unwrap();
+									ch_sender.send(TimerStatus::Pause).unwrap();
 								}
 							}
 							//继续游戏 / Resume the game
 							'R' => { 
 								if game.status==GameStatus::Paused{
 									game.resume();
-									tx.send(TimerStatus::Resume).unwrap();
+									ch_sender.send(TimerStatus::Resume).unwrap();
 								}
 							}
 							//新开游戏 / New game with current difficulty
@@ -1236,7 +1251,7 @@ fn main() -> io::Result<()> {
 								cmd.clear();
 
 								// Stop the timer
-								tx.send(TimerStatus::Stop).unwrap();
+								ch_sender.send(TimerStatus::Stop).unwrap();
 							}
 							// Check error
 							'C' => {
@@ -1245,7 +1260,7 @@ fn main() -> io::Result<()> {
 							// 换游戏难度 / Change difficulty
 							'D' => {
 								// stop the timer first
-								tx.send(TimerStatus::Stop).unwrap();
+								ch_sender.send(TimerStatus::Stop).unwrap();
 								// 换难度 / Change difficulty
 								game = new_game(0);
 								cmd.clear();
@@ -1286,7 +1301,7 @@ fn main() -> io::Result<()> {
 				//print!("\u{8}\u{8}");//退格
 				if kind==KeyEventKind::Release { continue;}; 
 				// save the current cursor position
-				let (col, row) = cursor::position().unwrap();
+				//let (col, row) = cursor::position().unwrap();
 				// deal with the reverse display
 				if cmd.len()>0 && !game_is_pause_or_finished{
 					let c1=cmd.chars().nth(0).unwrap();
@@ -1319,13 +1334,15 @@ fn main() -> io::Result<()> {
 						}
 					}
 				}
-				game.move_to(col, row);
-				if cmd.len()==0{
-					print!("     ");
-        			game.move_to(x+7, y); //cursor to cmd input postion
-				}
+				// game.move_to(col, row);
+				// if cmd.len()==0{
+				// 	print!("     ");
+        		// 	game.move_to(x+7, y); //cursor to cmd input postion
+				// }
 				cmd.pop(); //删除最后一个字符 / delete the last char of cmd string
-				print!("{} ", cmd);
+				game.echo_cmd(&cmd);
+				//print!("{} ", cmd);
+
 				game.stdout.flush().expect("Failed to flush output");
 			}
 			Event::Key(KeyEvent { code: KeyCode::Esc, .. }) => {
@@ -1348,7 +1365,7 @@ fn main() -> io::Result<()> {
 
 		// Success or Failed ,Pause the timer
 		if sc!=GameResult::NotOver {
-			tx.send(TimerStatus::Pause).unwrap(); 
+			ch_sender.send(TimerStatus::Pause).unwrap(); 
 			game.status=GameStatus::Finished;
 		}	
 	}
