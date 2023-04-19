@@ -74,15 +74,12 @@ impl Timer {
 		};
 
 	}
+	// 更新耗时显示
 	fn update_time_consuming(&self,x:u16,y:u16){
 		let mut stdout=std::io::stdout();
-		//更新耗时显示
-		//let (x,y)=Game::get_stat_time_pos();
-        //Game::move_to(x+10, y);
         stdout.queue(cursor::MoveTo(x+10,y)).unwrap();
 		print!("{}s",self.get_elapsed());
 		stdout.flush().expect("Failed to flush output");
-        //stdout.queue(cursor::MoveTo(pre_x,pre_y)).unwrap();
 
 	}
 }
@@ -105,6 +102,7 @@ impl Level {
 		// If other language displayed abnormally, please modify it bigger
 		let width_offset:u16=24; 
 		let height_offset:u16=4;
+
 		let mut lv=level;
 		if lv<=0 {
 			// Select difficult level to init Level / 选择难度级别
@@ -179,7 +177,7 @@ impl Level {
         return num;
 
     }
-    //处理数字输入
+    // 处理数字输入
     // deal keyboard input
     pub fn input() -> i16 {
         let mut input = String::new();
@@ -257,6 +255,7 @@ pub struct Game {
 
 impl Game {
 	fn new(level:u8) -> Game {
+		
 		//level==1 新手/ Beginner 
 		//level==2 初级/ Basic
 		//level==3 中级/ Intermediate
@@ -301,8 +300,8 @@ impl Game {
     fn calc_mines_1cell(&self,x: &usize, y: &usize) -> i8 {
         let mine_arr=&self.mine_table;
     
-        let max_x = mine_arr[0].len();
         let max_y = mine_arr.len();
+        let max_x = if max_y>0 {mine_arr[0].len()} else {0};
 
         let min_x: usize = if *x == 0 { 0 } else { x - 1 };
         let min_y: usize = if *y == 0 { 0 } else { y - 1 };
@@ -732,11 +731,11 @@ impl Game {
 		if !(c1>='A' && c1<='Z'){
 			return -1;
 		}
-		let row=c1 as u8 -65;
-		if row as usize>= self.level.cols{
+		let col=c1 as u8 -65;
+		if col as usize>= self.level.cols{
 			return -1;
 		}
-		return row as i16;
+		return col as i16;
 
 	}
 	// return (row,column)
@@ -1148,11 +1147,17 @@ fn main() -> io::Result<()> {
 				// two times,to avoid it here only deal with the Press event, do nothing when key released. 
 				if kind==KeyEventKind::Release { continue;}; 
 				
-				// Can not input more than 3 char.
-				if cmd.len()>=3 { continue;}
+				// Can not input more than 3 chars when cell operation.
+				// Can not input more than 2 chars when program operation
+				if cmd.len()>0{
+					let fc=cmd.chars().nth(0).unwrap();
+					if fc=='!' {
+						if cmd.len()>=2 { continue; }
+					}
+					if cmd.len()>=3 { continue; }
+				}
 
 				cmd += c.to_ascii_uppercase().to_string().as_str();
-				//print!("{} ", cmd);
 				game.echo_cmd(&cmd);
 
 				let c1=cmd.chars().nth(0).unwrap();
@@ -1160,6 +1165,9 @@ fn main() -> io::Result<()> {
 					match cmd.len() {
 						// reverse display row
 						1=>{
+							// Only process if the first input is a letter, 
+							// meaning if the first input is a row number.
+							// Do not process when first input is '!'.
 							if c1 >='A' && c1 <='Z'{
 								let row=game.get_row_from_char(&c);
 								if row!=-1{
@@ -1169,6 +1177,9 @@ fn main() -> io::Result<()> {
 						}
 						// reverse display column
 						2=>{
+							// Only process if the first input is a letter, 
+							// meaning if the first input is a row number.
+							// Do not process when first input is '!'.
 							let c1=cmd.chars().nth(0).unwrap() ;
 							if !c1.is_ascii_uppercase() { continue;}
 							let col=game.get_col_from_char(&c);
@@ -1188,9 +1199,7 @@ fn main() -> io::Result<()> {
 
 				game.stdout.flush().expect("Failed to flush output");
 
-				if cmd == "!EXIT" || cmd == "!Q" || cmd == "!QUIT" {
-					break;
-				}
+			
 				if cmd.len() >= 2 { // matched the cmd length
 					//如果命令长度已满足 
 					let c_y = cmd.chars().nth(0).unwrap(); //Y坐标字母 / Row number    like ABCDEF...
@@ -1215,13 +1224,15 @@ fn main() -> io::Result<()> {
 							}
 						}
 					}
-					if c_y == '!' { // !Command ,like !N=New game ,!Q=Quit,!P=Pause
+					// !Command ,like !N=New game ,!Q=Quit,!P=Pause
+					if c_y == '!' { 
 						match c_x {
 							//退出程序 / Quit program
 							'Q' => {
-								execute!(std::io::stdout(), Show).unwrap();
-								disable_raw_mode().expect("Failed to enable raw mode");
-								exit(0);
+								//execute!(std::io::stdout(), Show).unwrap();
+								//disable_raw_mode().expect("Failed to enable raw mode");
+								//exit(0);
+								break;
 							}
 							//暂停游戏 / Pause
 							'P' => { 
@@ -1295,8 +1306,9 @@ fn main() -> io::Result<()> {
 				// deal with the reverse display
 				if cmd.len()>0 && !game_is_pause_or_finished{
 					let c1=cmd.chars().nth(0).unwrap();
-					//if c1!='!'{
-					// if c1 is a letter
+					// Only process if the first input is a letter, 
+					// meaning if the first input is a row number.
+					// Do not process when first input is '!'.
 					if c1 >= 'A' && c1 <='Z'{
 						match cmd.len() {
 							// if len==1,cancel row reverse displaying
