@@ -116,8 +116,9 @@ Simple Operate example:
     - 当格子已翻开时，测试此格
     - When cell is opened,Test the cell.
 2. 右击 / Right click
+   
     标记此格为雷
-    
+
     Mark che cell mine
 # tmine
 
