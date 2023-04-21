@@ -15,7 +15,7 @@ TMine terminal Minesweeper game,support mouse operation
 
 
 
-该程序是一个键盘扫雷游戏，只需要键盘敲入行、列即可操作单元格，详解如下。
+该程序是一个键盘扫雷游戏，只需要键盘敲入行、列即可操作单元格，支持鼠标操作。详解如下。
 
 This is a keyboard Minesweeper game, input the row and column number of cell to operate the cell.Also support mouse operation.
 
@@ -117,6 +117,7 @@ Simple Operate example:
     - When cell is opened,Test the cell.
 2. 右击 / Right click
     标记此格为雷
+    
     Mark che cell mine
 # tmine
 

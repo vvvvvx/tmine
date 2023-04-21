@@ -1368,41 +1368,28 @@ fn main() -> io::Result<()> {
 				}
 				cmd.clear();
 			}
-			//鼠标左击事件
-			
+			//鼠标左击事件 / mouse left click
 			Event::Mouse(MouseEvent{kind:MouseEventKind::Down(MouseButton::Left),column,row,..}) => {
 				let (y,x)=game.pos_to_index(row, column);
 				if y>=0 && x >=0 {
-
-					if game.status==GameStatus::NotStart { //如果是第一个单元格，开始计时 / if the first cmd ,start timer.
+					//如果是第一个单元格，开始计时 / if the first cmd ,start timer.
+					if game.status==GameStatus::NotStart { 						
 						//开始计时 / Start timer
 						game.status=GameStatus::Started;
 						ch_sender.send(TimerStatus::Start).unwrap();
 					}
 					game.dig_cell(&(x as usize), &(y as usize), &' ');
 				}
-				//print!("c{}r{}",x,y);
-				//game.stdout.flush().unwrap();
 			}
-			// 处理鼠标左键双击事件
-			//Event::Mouse(MouseEvent{kind:MouseEventKind::Down(MouseButton::Left),column,row,..}) => {
-            //MouseEvent::Down(MouseButton::Left, x, y, 2) => {
-
-			//}
-			// 处理鼠标右击事件
+			// 处理鼠标右击事件 / mouse right click
 			Event::Mouse(MouseEvent{kind:MouseEventKind::Down(MouseButton::Right),column,row,..}) => {
-            //MouseEvent::Down(MouseButton::Right, x, y) => {
 				let (y,x)=game.pos_to_index(row, column);
 				if y>=0 && x >=0 {
 					game.dig_cell(&(x as usize), &(y as usize), &'F');
 				}
-				//print!("c{}r{}",column,row);
-
-				//game.stdout.flush().unwrap();
 			}
 			_ => {}//game.update_time_consuming(),
 		}
-		// deal with mouse event
 	
 		// Every loop check if success
 		let sc=game.success_check();
