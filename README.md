@@ -5,7 +5,7 @@ typora-root-url: ./
 
 
 # TMine键盘扫雷游戏
-TMine terminal Minesweeper game 
+TMine terminal Minesweeper game,support mouse operation
 
 > Author：Viaco（懒汉）
 >
@@ -17,7 +17,7 @@ TMine terminal Minesweeper game
 
 该程序是一个键盘扫雷游戏，只需要键盘敲入行、列即可操作单元格，详解如下。
 
-This is a keyboard Minesweeper game, input the row and column number of cell to operate the cell.
+This is a keyboard Minesweeper game, input the row and column number of cell to operate the cell.Also support mouse operation.
 
 ![difficulty](/difficulty.png)
 
