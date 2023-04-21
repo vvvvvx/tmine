@@ -10,7 +10,7 @@
 use crossterm::{
 	cursor,
 	cursor::{Hide, Show},
-	execute, terminal::{self, }, QueueableCommand, event::KeyEventKind,// Command,
+	execute, terminal::{self, }, QueueableCommand, event::{KeyEventKind, MouseEventKind, },// Command,
 };
 use crossterm::{
 	event::{read, Event, KeyCode, KeyEvent},
@@ -1006,39 +1006,46 @@ impl Game {
 		print!("{} ", self.mines_left);
 		self.stdout.flush().unwrap();
 	}
+	//清屏 / Clear screen
+	fn clear_screen() {
+		// 获取标准输出流
+		let mut stdout = io::stdout();
+		// 清屏 / clear screen.
+		stdout
+			.queue(terminal::Clear(terminal::ClearType::All))
+			.unwrap();
+		stdout.queue(cursor::MoveTo(0, 0)).unwrap();
+	}
+	fn new_game(level:u8)->Game{
+		Game::clear_screen();
+		disable_raw_mode().expect("Failed to enable raw mode");
+
+		let mut game = Game::new(level);
+
+		// 调整窗口大小，以符合该游戏级别的窗口尺寸要求 
+		// Adjust the terminal windows size to fit the game level
+		print!("\x1B[8;{};{}t", game.level.height, game.level.width);
+		stdout().flush().unwrap();
+
+		// Initialize the game
+		game.laying_mine();
+		game.calc_surrnd_mines_all();
+		game.draw_ui();
+		enable_raw_mode().expect("Failed to enable raw mode");
+		return game ;
+	}
+	fn pos_to_index(&mut self,row:u16,col:u16)->(i16,i16) {
+		let y=(row-1).div_euclid(2);
+		//let y=div_euclid
+		let x=(col-1).div_euclid(4);
+		let y_=if y>self.level.rows as u16 {-1} else {y as i16};
+		let x_=if x>self.level.cols as u16 {-1} else {x as i16};
+		return (y_,x_);
+	}
 } //impl Game ended
 
-//////////////////////Global functions below//////////////////////
 
-//清屏 / Clear screen
-fn clear_screen() {
-	// 获取标准输出流
-	let mut stdout = io::stdout();
-	// 清屏 / clear screen.
-	stdout
-		.queue(terminal::Clear(terminal::ClearType::All))
-		.unwrap();
-	stdout.queue(cursor::MoveTo(0, 0)).unwrap();
-}
 
-fn new_game(level:u8) -> Game {
-	clear_screen();
-	disable_raw_mode().expect("Failed to enable raw mode");
-
-	let mut game = Game::new(level);
-
-	// 调整窗口大小，以符合该游戏级别的窗口尺寸要求 
-    // Adjust the terminal windows size to fit the game level
-	print!("\x1B[8;{};{}t", game.level.height, game.level.width);
-	stdout().flush().unwrap();
-
-	// Initialize the game
-	game.laying_mine();
-	game.calc_surrnd_mines_all();
-	game.draw_ui();
-	enable_raw_mode().expect("Failed to enable raw mode");
-	return game;
-}
 #[derive(PartialEq)]
 enum TimerStatus {
 	NotStart,
@@ -1058,17 +1065,23 @@ struct SharePos{
 	time_pos_y:u16,
 }
 use std::sync::mpsc::{channel, Sender, Receiver};
+use crossterm::{
+    event::{  MouseEvent, MouseButton,},
+	event::{EnableMouseCapture, DisableMouseCapture},
+};
+
 use std::thread;
 use std::thread::{sleep,};
 use std::sync::{Arc, Mutex};
 fn main() -> io::Result<()> {
-	let mut game = new_game(0);
+	let mut game = Game::new_game(0);
 	let mut cmd: String = String::new();
 	let update_interval=Duration::from_secs(1); //update time consuming interval.
 	//隐藏光标 / Hide cursor
 	execute!(std::io::stdout(), Hide).unwrap();
 	//开启raw mode,监听键盘输入 / enable raw mode to listen keyboard input.
 	enable_raw_mode().expect("Failed to enable raw mode");
+	execute!(std::io::stdout(), EnableMouseCapture)?;
 	// 创建一个通信通道，用于主线程向子线程发送 timer status 变量
 	// Create a channel to control the timer by main thread.
     let (ch_sender, ch_receiver): (Sender<TimerStatus>, Receiver<TimerStatus>) = channel();
@@ -1251,7 +1264,7 @@ fn main() -> io::Result<()> {
 							//新开游戏 / New game with current difficulty
 							'N' => {
 								let lv=game.level.level;
-								game = new_game(lv);
+								game = Game::new_game(lv);
 								//(x, y) = game.get_cmd_pos();
 								cmd.clear();
 
@@ -1267,7 +1280,7 @@ fn main() -> io::Result<()> {
 								// stop the timer first
 								ch_sender.send(TimerStatus::Stop).unwrap();
 								// 换难度 / Change difficulty
-								game = new_game(0);
+								game = Game::new_game(0);
 								cmd.clear();
 
 								// because thanged the difficulty,the display size has also been changed automaticly.
@@ -1355,8 +1368,42 @@ fn main() -> io::Result<()> {
 				}
 				cmd.clear();
 			}
+			//鼠标左击事件
+			
+			Event::Mouse(MouseEvent{kind:MouseEventKind::Down(MouseButton::Left),column,row,..}) => {
+				let (y,x)=game.pos_to_index(row, column);
+				if y>=0 && x >=0 {
+
+					if game.status==GameStatus::NotStart { //如果是第一个单元格，开始计时 / if the first cmd ,start timer.
+						//开始计时 / Start timer
+						game.status=GameStatus::Started;
+						ch_sender.send(TimerStatus::Start).unwrap();
+					}
+					game.dig_cell(&(x as usize), &(y as usize), &' ');
+				}
+				//print!("c{}r{}",x,y);
+				//game.stdout.flush().unwrap();
+			}
+			// 处理鼠标左键双击事件
+			//Event::Mouse(MouseEvent{kind:MouseEventKind::Down(MouseButton::Left),column,row,..}) => {
+            //MouseEvent::Down(MouseButton::Left, x, y, 2) => {
+
+			//}
+			// 处理鼠标右击事件
+			Event::Mouse(MouseEvent{kind:MouseEventKind::Down(MouseButton::Right),column,row,..}) => {
+            //MouseEvent::Down(MouseButton::Right, x, y) => {
+				let (y,x)=game.pos_to_index(row, column);
+				if y>=0 && x >=0 {
+					game.dig_cell(&(x as usize), &(y as usize), &'F');
+				}
+				//print!("c{}r{}",column,row);
+
+				//game.stdout.flush().unwrap();
+			}
 			_ => {}//game.update_time_consuming(),
 		}
+		// deal with mouse event
+	
 		// Every loop check if success
 		let sc=game.success_check();
 
@@ -1370,6 +1417,7 @@ fn main() -> io::Result<()> {
 	execute!(std::io::stdout(), Show).unwrap();
 	//关闭raw mode / disable raw mode
 	disable_raw_mode().expect("Failed to enable raw mode");
+	execute!(std::io::stdout(), DisableMouseCapture)?;
 	let (_,y)=game.get_cmd_pos();
 	game.move_to(0, y+2);
 	//clear_screen();

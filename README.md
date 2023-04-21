@@ -109,7 +109,15 @@ Simple Operate example:
 
     CF+Enter:Means Test the cell. Equal to CFT+Enter
     
-
+## 鼠标操作 / Mouse Operate
+1. 左击 / Left click
+    - 当格子未翻开时，翻开此格
+    - When cell is not opened,Open the cell.
+    - 当格子已翻开时，测试此格
+    - When cell is opened,Test the cell.
+2. 右击 / Right click
+    标记此格为雷
+    Mark che cell mine
 # tmine
 
 >>>>>>> origin/main
