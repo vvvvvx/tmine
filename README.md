@@ -119,7 +119,7 @@ Simple Operate example:
    
     标记此格为雷
 
-    Mark che cell mine
+    Mark the cell mine
 # tmine
 
 >>>>>>> origin/main
