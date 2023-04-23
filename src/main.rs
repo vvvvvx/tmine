@@ -527,6 +527,7 @@ impl Game {
 						self.mine_table[*y][*x].status = Status::Unexplored;
 						self.mines_left+=1;
 						self.refresh_cell(x, y);
+						self.update_mine_left_disp(); //更新余雷数量显示
 					}
 					// Pending cmd 
 					'P' => {
