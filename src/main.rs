@@ -1035,12 +1035,17 @@ impl Game {
 		enable_raw_mode().expect("Failed to enable raw mode");
 		return game ;
 	}
+
 	fn pos_to_index(&mut self,row:u16,col:u16)->(i16,i16) {
 		let y=(row-1).div_euclid(2);
-		//let y=div_euclid
 		let x=(col-1).div_euclid(4);
-		let y_=if y>self.level.rows as u16 {-1} else {y as i16};
-		let x_=if x>self.level.cols as u16 {-1} else {x as i16};
+		// 余数==0,表明鼠标在表格线上
+		// remainder==0 means mouse cursor is over the table divider line.
+		let y_re=(row-1)%2;
+		let x_re=(col-1)%4;
+		
+		let y_=if y>self.level.rows as u16 || y_re==0 {-1} else {y as i16};
+		let x_=if x>self.level.cols as u16 || x_re==0 {-1} else {x as i16};
 		return (y_,x_);
 	}
 } //impl Game ended
