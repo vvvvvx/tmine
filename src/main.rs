@@ -1372,7 +1372,7 @@ fn main() -> io::Result<()> {
 			//鼠标左击事件 / mouse left click
 			Event::Mouse(MouseEvent{kind:MouseEventKind::Down(MouseButton::Left),column,row,..}) => {
 				let (y,x)=game.pos_to_index(row, column);
-				if y>=0 && x >=0 {
+				if y>=0 && x >=0 && !game_is_pause_or_finished{
 					//如果是第一个单元格，开始计时 / if the first cmd ,start timer.
 					if game.status==GameStatus::NotStart { 						
 						//开始计时 / Start timer
@@ -1385,7 +1385,7 @@ fn main() -> io::Result<()> {
 			// 处理鼠标右击事件 / mouse right click
 			Event::Mouse(MouseEvent{kind:MouseEventKind::Down(MouseButton::Right),column,row,..}) => {
 				let (y,x)=game.pos_to_index(row, column);
-				if y>=0 && x >=0 {
+				if y>=0 && x >=0 && !game_is_pause_or_finished {
 					game.dig_cell(&(x as usize), &(y as usize), &'F');
 				}
 			}
