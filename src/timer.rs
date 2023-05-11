@@ -17,16 +17,20 @@ pub struct Timer {
     pub last: Instant,
     pub is_running: bool,
 }
-
+impl Default for Timer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Timer {
     pub fn new() -> Timer {
-        return Timer {
+        Timer {
             start_time: Instant::now(),
             pause_duration: 0,
             pause_time: Instant::now(),
             last: Instant::now(),
             is_running: false,
-        };
+        }
     }
 
     pub fn start(&mut self) {
@@ -52,11 +56,11 @@ impl Timer {
         self.last = Instant::now();
     }
     pub fn get_elapsed(&self) -> u64 {
-        return if self.is_running {
+        if self.is_running {
             self.start_time.elapsed().as_secs() - self.pause_duration
         } else {
             self.pause_time.duration_since(self.start_time).as_secs() - self.pause_duration
-        };
+        }
     }
     // 更新耗时显示
     pub fn update_time_consuming(&self, x: u16, y: u16) {

@@ -63,12 +63,15 @@ fn main() -> io::Result<()> {
         loop {
             // Get the command from main thread
             let mut status_t = TimerStatus::NotStart;
-            match ch_receiver.try_recv() {
-                Ok(new_status) => {
-                    status_t = new_status;
-                }
-                Err(_) => {}
+            if let Ok(new_status) = ch_receiver.try_recv() {
+                status_t = new_status;
             };
+            // match ch_receiver.try_recv() {
+            //     Ok(new_status) => {
+            //         status_t = new_status;
+            //     }
+            //     Err(_) => {}
+            // };
             // 判断 timer status 变量的值,操作timer
             match status_t {
                 //match *status {
@@ -128,12 +131,14 @@ fn main() -> io::Result<()> {
 
                 // Can not input more than 3 chars when cell operation.
                 // Can not input more than 2 chars when program operation
-                if cmd.len() > 0 {
-                    let fc = cmd.chars().nth(0).unwrap();
-                    if fc == '!' {
-                        if cmd.len() >= 2 {
-                            continue;
-                        }
+                //if cmd.len() > 0 {
+                if !cmd.is_empty() {
+                    //let fc = cmd.chars().nth(0).unwrap();
+                    let fc = cmd.chars().next().unwrap();
+                    if fc == '!' && cmd.len() >= 2 {
+                        // if cmd.len() >= 2 {
+                        continue;
+                        //   }
                     }
                     if cmd.len() >= 3 {
                         continue;
@@ -143,7 +148,8 @@ fn main() -> io::Result<()> {
                 cmd += c.to_ascii_uppercase().to_string().as_str();
                 game.echo_cmd(&cmd);
 
-                let c1 = cmd.chars().nth(0).unwrap();
+                //let c1 = cmd.chars().nth(0).unwrap();
+                let c1 = cmd.chars().next().unwrap();
                 if !game_is_pause_or_finished {
                     match cmd.len() {
                         // reverse display row
@@ -151,7 +157,8 @@ fn main() -> io::Result<()> {
                             // Only process if the first input is a letter,
                             // meaning if the first input is a row number.
                             // Do not process when first input is '!'.
-                            if c1 >= 'A' && c1 <= 'Z' {
+                            //if c1 >= 'A' && c1 <= 'Z' {
+                            if c1.is_ascii_uppercase() {
                                 let row = game.get_row_from_char(&c);
                                 if row != -1 {
                                     game.rever_disp_row(row as u16);
@@ -163,13 +170,14 @@ fn main() -> io::Result<()> {
                             // Only process if the first input is a letter,
                             // meaning if the first input is a row number.
                             // Do not process when first input is '!'.
-                            let c1 = cmd.chars().nth(0).unwrap();
+                            //let c1 = cmd.chars().nth(0).unwrap();
+                            let c1 = cmd.chars().next().unwrap();
                             if !c1.is_ascii_uppercase() {
                                 continue;
                             }
                             let col = game.get_col_from_char(&c);
                             let row = (c1 as u8 - 65) as usize;
-                            if col != -1 && c1 >= 'A' && c1 <= 'Z' && row < game.level.rows {
+                            if col != -1 && c1.is_ascii_uppercase() && row < game.level.rows {
                                 game.rever_disp_col(col as u16);
                             }
                         }
@@ -192,7 +200,8 @@ fn main() -> io::Result<()> {
                 if cmd.len() >= 2 {
                     // matched the cmd length
                     //如果命令长度已满足
-                    let c_y = cmd.chars().nth(0).unwrap(); //Y坐标字母 / Row number    like ABCDEF...
+                    //let c_y = cmd.chars().nth(0).unwrap(); //Y坐标字母 / Row number    like ABCDEF...
+                    let c_y = cmd.chars().next().unwrap();
                     let c_x = cmd.chars().nth(1).unwrap(); //X坐标字母 / Column number like ABCDEF...
 
                     let mut c_cmd = ' ';
@@ -200,7 +209,8 @@ fn main() -> io::Result<()> {
                         c_cmd = cmd.chars().nth(2).unwrap(); //命令字符 / The cmd char,like D-Dig,F-Flag,P-Pending,T-Test
                     }
                     // confirm c_x,c_y is uppercase letter
-                    if c_y >= 'A' && c_y <= 'Z' && c_x >= 'A' && c_x <= 'Z' {
+                    //if c_y >= 'A' && c_y <= 'Z' && c_x >= 'A' && c_x <= 'Z' {
+                    if c_y.is_ascii_uppercase() && c_x.is_ascii_uppercase() {
                         let col = c_x as usize - 65; // 65 is the char 'A'
                         let row = c_y as usize - 65;
                         // 确保未超最大行列 / Ensure row and column input is below the most table index.
@@ -304,12 +314,14 @@ fn main() -> io::Result<()> {
                 };
 
                 // deal with the reverse display
-                if cmd.len() > 0 && !game_is_pause_or_finished {
-                    let c1 = cmd.chars().nth(0).unwrap();
+                if !cmd.is_empty() && !game_is_pause_or_finished {
+                    //let c1 = cmd.chars().nth(0).unwrap();
+                    let c1 = cmd.chars().next().unwrap();
                     // Only process if the first input is a letter,
                     // meaning if the first input is a row number.
                     // Do not process when first input is '!'.
-                    if c1 >= 'A' && c1 <= 'Z' {
+                    //if c1 >= 'A' && c1 <= 'Z' {
+                    if c1.is_ascii_uppercase() {
                         match cmd.len() {
                             // if len==1,cancel row reverse displaying
                             1 => {

@@ -33,7 +33,7 @@ impl super::Game {
         for i in 0..(self.level.rows - 1) {
             let (x, y) = super::Game::pos_from_index(col, i as u16);
             self.move_to(x - 1, y);
-            self.refresh_cell(&(col as usize), &(i as usize));
+            self.refresh_cell(&(col as usize), &i);
             self.move_to(x - 1, y + 1);
             print!("───");
         }
@@ -60,7 +60,7 @@ impl super::Game {
                     //如果已经打开了，则不管。
                     continue;
                 }
-                if self.mine_table[i][j].is_mine == true {
+                if self.mine_table[i][j].is_mine {
                     let (x, y) = Game::pos_from_index(j as u16, i as u16);
                     self.move_to(x, y);
                     print!("\x1B[31mM\x1B[0m");
@@ -73,8 +73,7 @@ impl super::Game {
     pub fn display_err(&mut self) {
         for i in 0..self.mine_table.len() {
             for j in 0..self.mine_table[i].len() {
-                if self.mine_table[i][j].status == Status::Flaged
-                    && self.mine_table[i][j].is_mine == false
+                if self.mine_table[i][j].status == Status::Flaged && !self.mine_table[i][j].is_mine
                 {
                     let (x, y) = Game::pos_from_index(j as u16, i as u16);
                     self.move_to(x, y);
@@ -122,7 +121,7 @@ impl super::Game {
             let c = 66 + i;
             print!("   {}", (c as u8) as char);
         }
-        print!("\n");
+        println!();
         //打印表格第一行 / Print the firest line of table
         let mut first_line: String = String::from(" ┌");
         for _i in 0..col - 1 {
@@ -140,7 +139,7 @@ impl super::Game {
 
         //   拼接衔接列
         let mut jj_line: String = String::from("│");
-        for _i in 0..col + 0 {
+        for _i in 0..col {
             jj_line += "   │"
         }
         //   打印中间行 / Print middle lines
@@ -148,7 +147,7 @@ impl super::Game {
             let c = 65 + i;
             print!("{}", (c as u8) as char); //打印左侧行序号 / Print row numbers on the left ,like ABCDEFG...
             self.stdout.write_all(jj_line.as_bytes()).unwrap();
-            print!("{}\n", (c as u8) as char); //打印右侧行序号 / Print row numbers on the right ,like ABCDEF....
+            println!("{}", (c as u8) as char); //打印右侧行序号 / Print row numbers on the right ,like ABCDEF....
             self.stdout.write_all(mid_line.as_bytes()).unwrap();
         }
         //打印底行 / Print bottom line
@@ -160,7 +159,7 @@ impl super::Game {
         let c = 65 + row - 1;
         print!("{}", (c as u8) as char); //打印最后一行左侧行序号 / Print the last line's row number on the left
         self.stdout.write_all(jj_line.as_bytes()).unwrap();
-        print!("{}\n", (c as u8) as char); //打印最后一行右侧行序号 / Print the last line's row number on the right
+        println!("{}", (c as u8) as char); //打印最后一行右侧行序号 / Print the last line's row number on the right
         self.stdout.write_all(bot_line.as_bytes()).unwrap();
         //打印底边列号 / Print the column nubmer on bottom.
         print!("   {}", (65) as char);
@@ -168,7 +167,7 @@ impl super::Game {
             let c = 66 + i;
             print!("   {}", (c as u8) as char);
         }
-        print!("\n");
+        println!();
 
         //打印提示信息 / Print statistics info
         let (x, y) = self.get_stat_mine_pos();
@@ -206,13 +205,13 @@ impl super::Game {
 
         if self.level.level > 1 {
             if self.level.level > 2 {
-                y3_ = y3_ + 1;
+                y3_ += 1;
             }
             self.move_to(x3, y3_ + 5);
             print!("Left Click  = D/T");
             self.move_to(x3, y3_ + 6);
             print!("Right Click = F");
-            y3_ = y3_ + 2;
+            y3_ += 2;
         }
 
         self.move_to(x3, y3_ + 6);
@@ -318,7 +317,7 @@ impl super::Game {
         for i in 0..(self.level.rows - 1) {
             let (x, y) = Game::pos_from_index(col, i as u16);
             self.move_to(x - 1, y);
-            self.rever_disp_cell(&(col as usize), &(i as usize));
+            self.rever_disp_cell(&(col as usize), &i);
             self.move_to(x - 1, y + 1);
             print!("\x1B[42m───\x1B[0m");
         }

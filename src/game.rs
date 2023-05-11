@@ -65,7 +65,7 @@ impl Game {
         game.calc_surrnd_mines_all();
         game.draw_ui();
         enable_raw_mode().expect("Failed to enable raw mode");
-        return game;
+        game
     }
     // 计算（x,y）单元格周围的雷数
     // Calculte surrounding mines of the cell (x,y)
@@ -81,19 +81,18 @@ impl Game {
         let mut sum: i8 = 0;
         for i in min_y..y + 2 {
             for j in min_x..x + 2 {
-                if !(i == *y && j == *x) && i < max_y && j < max_x && mine_arr[i][j].is_mine == true
-                {
+                if !(i == *y && j == *x) && i < max_y && j < max_x && mine_arr[i][j].is_mine {
                     sum += 1;
                 }
             }
         }
-        return sum;
+        sum
     }
     //计算周围雷数 / calculate the surrounding mines of cur cell
     fn calc_surrnd_mines_all(&mut self) {
         for i in 0..self.mine_table.len() {
             for j in 0..self.mine_table[i].len() {
-                if self.mine_table[i][j].is_mine == false {
+                if !self.mine_table[i][j].is_mine {
                     self.mine_table[i][j].surrnd_mines = self.calc_mines_1cell(&j, &i);
                 }
             }
@@ -104,7 +103,7 @@ impl Game {
     // x y is the mine array's index
     pub fn dig_cell(&mut self, x: &usize, y: &usize, cmd: &char) {
         //let  m: &mut Cell=&mut (self.mine_table[*y][*x]);
-        if *x >= self.level.cols as usize || *y >= self.level.rows as usize {
+        if *x >= self.level.cols || *y >= self.level.rows {
             return;
         }
         match self.mine_table[*y][*x].status {
@@ -270,7 +269,7 @@ impl Game {
     // 产生随机数
     fn get_rand(range: usize) -> usize {
         let mut rng = rand::thread_rng();
-        return rng.gen_range(0, range);
+        rng.gen_range(0, range)
     }
     //随机初始化雷阵 / random init the mine array
     fn laying_mine(&mut self) {
@@ -286,36 +285,12 @@ impl Game {
             let x = Game::get_rand(self.level.cols);
             let y = Game::get_rand(self.level.rows);
             //布雷
-            if self.mine_table[y][x].is_mine == false {
+            if !self.mine_table[y][x].is_mine {
                 self.mine_table[y][x].is_mine = true;
                 i -= 1;
             }
         }
     }
-
-    // 刷新单元格内容 / Refresh cell display when cell's status changed
-    // ASCI转移字符
-    // 红色：\x1B[31m
-    // 绿色：\x1B[32m
-    // 黄色：\x1B[33m
-    // 蓝色：\x1B[34m
-    // 洋红色：\x1B[35m
-    // 青色：\x1B[36m
-    // 92淡绿色
-
-    // 背景：
-
-    //     40：黑色
-    //     41：红色
-    //     42：绿色
-    //     43：黄色
-    //     44：蓝色
-    //     45：洋红色
-    //     46：青色
-    //     47：白色
-
-    // 绿色背景：\x1b[42m
-    // 重置：\x1B[0m
 
     // Pause game
     pub fn pause(&mut self) {
@@ -356,9 +331,7 @@ impl Game {
                     unexplored += 1;
                 }
 
-                if self.mine_table[i][j].is_mine == true
-                    && self.mine_table[i][j].status == Status::Opened
-                {
+                if self.mine_table[i][j].is_mine && self.mine_table[i][j].status == Status::Opened {
                     err_flaged += 1;
                 }
             }
@@ -394,6 +367,6 @@ impl Game {
         //打印胜利信息 / print success info
         self.display_success();
 
-        return GameResult::Success;
+        GameResult::Success
     }
 }

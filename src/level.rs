@@ -22,13 +22,13 @@ impl Level {
         let height_offset: u16 = 4;
 
         let mut lv = level;
-        if lv <= 0 {
+        if lv == 0 {
             // Select difficult level to init Level / 选择难度级别
             lv = Level::select_level() as u8;
         }
         match lv {
             1 => Level {
-                level: lv as u8,
+                level: lv,
                 rows: 8,
                 cols: 10,
                 mines: 7,
@@ -36,7 +36,7 @@ impl Level {
                 height: 8 * 2 + height_offset,
             },
             2 => Level {
-                level: lv as u8,
+                level: lv,
                 rows: 9,
                 cols: 14,
                 mines: 15,
@@ -44,7 +44,7 @@ impl Level {
                 height: 9 * 2 + height_offset,
             },
             3 => Level {
-                level: lv as u8,
+                level: lv,
                 rows: 15,
                 cols: 20,
                 mines: 40,
@@ -52,7 +52,7 @@ impl Level {
                 height: 15 * 2 + height_offset,
             },
             4 => Level {
-                level: lv as u8,
+                level: lv,
                 rows: 19,
                 cols: 26,
                 mines: 99,
@@ -82,7 +82,8 @@ impl Level {
             println!("flush err");
         };
         let mut num = Level::input();
-        while num < 0 || num > 4 {
+        //while num < 0 || num > 4 {
+        while !(0..=4).contains(&num) {
             if num > 4 {
                 println!("请输入0-4以内的数，以确定难度级别");
                 //println!("Please input number between 0-4");
@@ -92,7 +93,7 @@ impl Level {
         if num == 0 {
             exit(0)
         }
-        return num;
+        num
     }
     // 处理数字输入
     // deal keyboard input
@@ -106,6 +107,6 @@ impl Level {
                 return -1;
             }
         };
-        return num;
+        num
     }
 }

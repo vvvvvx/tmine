@@ -13,7 +13,11 @@ pub struct Cell {
     pub surrnd_mines: i8, // 周围雷数   / Sum of surrounding mines
     pub status: Status,   // 单元格状态 / Cell status
 }
-
+impl Default for Cell {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Cell {
     pub fn new() -> Cell {
         Cell {
@@ -22,6 +26,7 @@ impl Cell {
             status: Status::Unexplored,
         }
     }
+
     /*
     pub fn set_mine(&mut self, b: bool) {
         self.is_mine = b;
