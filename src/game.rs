@@ -79,9 +79,16 @@ impl Game {
         let min_y: usize = if *y == 0 { 0 } else { y - 1 };
 
         let mut sum: i8 = 0;
-        for i in min_y..y + 2 {
-            for j in min_x..x + 2 {
-                if !(i == *y && j == *x) && i < max_y && j < max_x && mine_arr[i][j].is_mine {
+        // for i in min_y..y + 2 {
+        //     for j in min_x..x + 2 {
+        //         if !(i == *y && j == *x) && i < max_y && j < max_x && mine_arr[i][j].is_mine {
+        //             sum += 1;
+        //         }
+        //     }
+        // }
+        for (i, _) in mine_arr.iter().enumerate().take(y + 2).skip(min_y) {
+            for (j, cell) in mine_arr[i].iter().enumerate().take(x + 2).skip(min_x) {
+                if !(i == *y && j == *x) && i < max_y && j < max_x && cell.is_mine {
                     sum += 1;
                 }
             }
@@ -176,8 +183,11 @@ impl Game {
                         let mx = *x + 2;
                         let my = *y + 2;
 
-                        let tmax_x = &(self.level.cols as usize);
-                        let tmax_y = &(self.level.rows as usize);
+                        // let tmax_x = &(self.level.cols as usize);
+                        // let tmax_y = &(self.level.rows as usize);
+                        let tmax_y = &self.mine_table.len();
+                        let tmax_x = &self.mine_table[0].len();
+
                         let max_x = if mx > *tmax_x { tmax_x } else { &mx };
                         let max_y = if my > *tmax_y { tmax_y } else { &my };
                         let mut sum_mines = 0;
