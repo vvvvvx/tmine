@@ -11,7 +11,7 @@ TMine terminal Minesweeper game,support mouse operation
 >
 > Time：2023-04-07
 >
-> Address：Chengdu,China
+> Address：China
 
 
 
