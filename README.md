@@ -7,7 +7,7 @@ typora-root-url: ./
 # TMine键盘扫雷游戏
 TMine terminal Minesweeper game,support mouse operation
 
-> Author：Viaco（懒汉）
+> Author：vvvvvx
 >
 > Time：2023-04-07
 >
