@@ -8,42 +8,29 @@
 //use std::io::Write;
 use crossterm::{
     cursor::{Hide, Show},
-    event::{KeyEventKind, MouseEventKind}, // Command,
-    execute,
-};
-use crossterm::{
     event::{read, Event, KeyCode, KeyEvent},
+    event::{DisableMouseCapture, EnableMouseCapture},
+    event::{KeyEventKind, MouseEventKind},
+    event::{MouseButton, MouseEvent},
+    execute,
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-//use core::time;
-use std::io::Write;
 use std::{
-    io::{self},
+    io::{self, Write},
+    sync::{
+        mpsc::{channel, Receiver, Sender},
+        Arc, Mutex,
+    },
+    thread::{self, sleep},
     time::Duration,
 };
-use tmine::game::*;
-#[derive(PartialEq)]
-enum TimerStatus {
-    NotStart,
-    Start,
-    Pause,
-    Resume,
-    Stop,
-}
+
 struct SharePos {
     time_pos_x: u16,
     time_pos_y: u16,
 }
-use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
-    event::{MouseButton, MouseEvent},
-};
-use std::sync::mpsc::{channel, Receiver, Sender};
-
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::thread::sleep;
-use tmine::timer;
+use tmine::game::*;
+use tmine::timer::{Timer, TimerStatus};
 fn main() -> io::Result<()> {
     let mut game = Game::new_game(0);
     let mut cmd: String = String::new();
@@ -69,7 +56,7 @@ fn main() -> io::Result<()> {
     let shared_var_clone = shared_var.clone();
 
     // Create a timer
-    let mut timer = timer::Timer::new();
+    let mut timer = Timer::new();
 
     // 启动一个子线程，用于更新耗时信息
     // run a timer thread to update time consuming

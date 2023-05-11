@@ -1,15 +1,14 @@
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use super::{cell::*, level::Level};
 use crossterm::{
     cursor,
-    terminal::{self},
+    terminal::{self, disable_raw_mode, enable_raw_mode},
     QueueableCommand,
 };
 use rand::Rng;
-//use core::time;
-use super::{cell::*, level::Level};
-use std::io::{self, Stdout};
-use std::io::{stdout, Write};
-use std::vec;
+use std::{
+    io::{self, stdout, Stdout, Write},
+    vec,
+};
 
 #[derive(PartialEq)]
 pub enum GameResult {

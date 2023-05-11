@@ -2,6 +2,14 @@ use crossterm::{cursor, QueueableCommand};
 use std::io::Write;
 use std::time::Instant;
 
+#[derive(PartialEq)]
+pub enum TimerStatus {
+    NotStart,
+    Start,
+    Pause,
+    Resume,
+    Stop,
+}
 pub struct Timer {
     pub start_time: Instant,
     pub pause_duration: u64,
