@@ -1,11 +1,10 @@
 //-----------TMine-----------
-//Begin date : 2023-04-07
-//Finish date: 2023-04-11
-//Author     : vvvvvx
-//Address	 : China
+// Begin date : 2023-04-07
+// Finish date: 2023-04-11
+// Author     : vvvvvx
+// Address	  : China
 //-----------TMine-----------
 
-//use std::io::Write;
 use crossterm::{
     cursor::{Hide, Show},
     event::{read, Event, KeyCode, KeyEvent},
