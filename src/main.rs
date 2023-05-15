@@ -233,8 +233,9 @@ fn main() -> io::Result<()> {
                         match c_x {
                             //退出程序 / Quit program
                             'Q' => {
-                                //execute!(std::io::stdout(), Show).unwrap();
+                                execute!(std::io::stdout(), Show).unwrap();
                                 //disable_raw_mode().expect("Failed to enable raw mode");
+                                //execute!(std::io::stdout(), DisableMouseCapture)?;
                                 //exit(0);
                                 break;
                             }
@@ -270,8 +271,10 @@ fn main() -> io::Result<()> {
                             'D' => {
                                 // stop the timer first
                                 ch_sender.send(TimerStatus::Stop).unwrap();
+                                execute!(std::io::stdout(), DisableMouseCapture)?;
                                 // 换难度 / Change difficulty
                                 game = Game::new_game(0);
+                                execute!(std::io::stdout(), EnableMouseCapture)?;
                                 cmd.clear();
 
                                 // because thanged the difficulty,the display size has also been changed automaticly.

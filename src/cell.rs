@@ -1,4 +1,4 @@
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq,Eq)]
 pub enum Status {
     Opened,     // 已开     /have opened
     Flaged,     // 已标记雷  /Flaged mine

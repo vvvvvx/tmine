@@ -1,7 +1,6 @@
 use std::io;
 use std::io::Write;
 use std::process::exit;
-
 #[derive(Clone)]
 pub struct Level {
     // Game difficulty Level
@@ -75,6 +74,7 @@ impl Level {
         //level==2 初级/Basic
         //level==3 中级/Intermediate
         //level==4 高级/Advanced
+
         print!("\n请选择难度级别|Select difficulty:\n\n   1--新手|Beginner      8x10  [  7 雷|Mines ]\n   2--初级|Basic         9x14  [ 15 雷|Mines ]\n   3--中级|Intermediate 15x20  [ 40 雷|Mines ]\n   4--高级|Advanced     19x26  [ 99 雷|Mines ]\n\n   0--退出|Quit\n\n请选择|Your choice:");
         // print!("\nPlease select the difficult level:\n   1--Beginner 8x10 [  7Mines ]\n   2--Basic....")
 

@@ -9,13 +9,13 @@ use std::{
     vec,
 };
 
-#[derive(PartialEq)]
+#[derive(PartialEq,Eq)]
 pub enum GameResult {
     Success,
     Failed,
     NotOver,
 }
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq,Eq)]
 pub enum GameStatus {
     NotStart,
     Started,
@@ -93,6 +93,7 @@ impl Game {
                 }
             }
         }
+       
         sum
     }
     //计算周围雷数 / calculate the surrounding mines of cur cell

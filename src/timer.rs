@@ -2,7 +2,7 @@ use crossterm::{cursor, QueueableCommand};
 use std::io::Write;
 use std::time::Instant;
 
-#[derive(PartialEq)]
+#[derive(PartialEq,Eq)]
 pub enum TimerStatus {
     NotStart,
     Start,
