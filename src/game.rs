@@ -9,13 +9,13 @@ use std::{
     vec,
 };
 
-#[derive(PartialEq,Eq)]
+#[derive(PartialEq, Eq)]
 pub enum GameResult {
     Success,
     Failed,
     NotOver,
 }
-#[derive(Clone, PartialEq,Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum GameStatus {
     NotStart,
     Started,
@@ -93,7 +93,7 @@ impl Game {
                 }
             }
         }
-       
+
         sum
     }
     //计算周围雷数 / calculate the surrounding mines of cur cell
@@ -144,20 +144,18 @@ impl Game {
                         if self.mine_table[*y][*x].surrnd_mines == 0 {
                             //递归翻开周围单元格 / if surrnd_mines=0 recursive dig its surrounding cells
                             //限定数组边界 / limit the index range
-                            let tx = *x as i16 - 1;
-                            let ty = *y as i16 - 1;
-                            let min_x = if tx < 0 { &0 } else { &tx };
-                            let min_y = if ty < 0 { &0 } else { &ty };
 
-                            let mx = *x + 2;
-                            let my = *y + 2;
+                            let min_x = if *x == 0 { 0 } else { *x - 1 };
+                            let min_y = if *y == 0 { 0 } else { *y - 1 };
 
-                            let tmax_x = &self.mine_table[0].len();
-                            let tmax_y = &self.mine_table.len();
-                            let max_x = if mx > *tmax_x { tmax_x } else { &mx };
-                            let max_y = if my > *tmax_y { tmax_y } else { &my };
-                            for yy in *min_y as usize..*max_y {
-                                for xx in *min_x as usize..*max_x {
+                            let cols = self.level.cols;
+                            let rows = self.level.rows;
+
+                            let max_x = if (*x + 2) > cols { cols } else { *x + 2 };
+                            let max_y = if (*y + 2) > rows { rows } else { *y + 2 };
+
+                            for yy in min_y as usize..max_y {
+                                for xx in min_x as usize..max_x {
                                     if self.mine_table[yy][xx].status == Status::Unexplored
                                         && !(xx == *x && yy == *y)
                                     {
@@ -176,25 +174,21 @@ impl Game {
                     // 测试命令 /Test cmd
                     'T' | '\n' | ' ' => {
                         //Test:如果测试周围Flag数量==srrnd_mines,则把周围未开的的全开
-                        let tx = *x as i16 - 1;
-                        let ty = *y as i16 - 1;
-                        let min_x = if tx < 0 { &0 } else { &tx };
-                        let min_y = if ty < 0 { &0 } else { &ty };
 
-                        let mx = *x + 2;
-                        let my = *y + 2;
+                        // index最小范围不能比0还小
+                        let min_x = if *x == 0 { 0 } else { *x - 1 };
+                        let min_y = if *y == 0 { 0 } else { *y - 1 };
 
-                        // let tmax_x = &(self.level.cols as usize);
-                        // let tmax_y = &(self.level.rows as usize);
-                        let tmax_y = &self.mine_table.len();
-                        let tmax_x = &self.mine_table[0].len();
+                        let cols = self.level.cols;
+                        let rows = self.level.rows;
+                        // index最大范围，不能比level最大值还大
+                        let max_x = if (*x + 2) > cols { cols } else { *x + 2 };
+                        let max_y = if (*y + 2) > rows { rows } else { *y + 2 };
 
-                        let max_x = if mx > *tmax_x { tmax_x } else { &mx };
-                        let max_y = if my > *tmax_y { tmax_y } else { &my };
                         let mut sum_mines = 0;
                         //计算周围标记的雷个数 / calculate surrounding mines
-                        for yy in *min_y as usize..*max_y {
-                            for xx in *min_x as usize..*max_x {
+                        for yy in min_y as usize..max_y {
+                            for xx in min_x as usize..max_x {
                                 if self.mine_table[yy][xx].status == Status::Flaged {
                                     sum_mines += 1;
                                 }
@@ -203,8 +197,8 @@ impl Game {
                         // 如果标记的数量等于单元格总雷数，则把除标记之外的单元格都打开
                         // if cell's surrounding mines== cell.surrnd_mine, dig open the left unopened cells surrounding.
                         if self.mine_table[*y][*x].surrnd_mines == sum_mines {
-                            for yy in *min_y as usize..*max_y {
-                                for xx in *min_x as usize..*max_x {
+                            for yy in min_y as usize..max_y {
+                                for xx in min_x as usize..max_x {
                                     if self.mine_table[yy][xx].status != Status::Flaged
                                         && !(xx == *x && yy == *y)
                                     {
@@ -260,8 +254,8 @@ impl Game {
                         self.mine_table[*y][*x].status = Status::Unexplored;
                         self.dig_cell(x, y, &'D');
                     }
+                    //标记 / Flag it
                     'F' => {
-                        //标记 / Flag it
                         self.mine_table[*y][*x].status = Status::Flaged;
                         self.refresh_cell(x, y);
                     }
