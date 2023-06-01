@@ -110,7 +110,6 @@ impl Game {
     // x、y为mine_arr数组index坐标
     // x y is the mine array's index
     pub fn dig_cell(&mut self, x: &usize, y: &usize, cmd: &char) {
-        //let  m: &mut Cell=&mut (self.mine_table[*y][*x]);
         if *x >= self.level.cols || *y >= self.level.rows {
             return;
         }
