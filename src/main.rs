@@ -186,10 +186,12 @@ fn main() -> io::Result<()> {
                     //Y坐标字母 / Row number    like ABCDEF...
                     if let None = cmd.chars().next() {
                         cmd.clear();
+                        game.echo_cmd(&cmd);
                         continue;
                     }
                     if let None = cmd.chars().nth(1) {
                         cmd.clear();
+                        game.echo_cmd(&cmd);
                         continue;
                     }
                     //let c_y = cmd.chars().next().unwrap();
