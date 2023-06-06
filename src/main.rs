@@ -184,7 +184,16 @@ fn main() -> io::Result<()> {
                     // matched the cmd length
                     //如果命令长度已满足
                     //Y坐标字母 / Row number    like ABCDEF...
-                    let c_y = cmd.chars().next().unwrap();
+                    if let None = cmd.chars().next() {
+                        cmd.clear();
+                        continue;
+                    }
+                    if let None = cmd.chars().nth(1) {
+                        cmd.clear();
+                        continue;
+                    }
+                    //let c_y = cmd.chars().next().unwrap();
+                    let c_y = cmd.chars().nth(0).unwrap();
                     let c_x = cmd.chars().nth(1).unwrap(); //X坐标字母 / Column number like ABCDEF...
 
                     let mut c_cmd = ' ';
