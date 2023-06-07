@@ -184,12 +184,13 @@ fn main() -> io::Result<()> {
                     // matched the cmd length
                     //如果命令长度已满足
                     //Y坐标字母 / Row number    like ABCDEF...
-                    if let None = cmd.chars().next() {
+                    if cmd.chars().next().is_none() {
                         cmd.clear();
                         game.echo_cmd(&cmd);
                         continue;
                     }
-                    if let None = cmd.chars().nth(1) {
+                    // 处理中文输入法下不正常输入
+                    if cmd.chars().nth(1).is_none() {
                         cmd.clear();
                         game.echo_cmd(&cmd);
                         continue;
@@ -375,6 +376,62 @@ fn main() -> io::Result<()> {
                     }
                     // Left click = ' ' = Dig or Test
                     game.dig_cell(&(x as usize), &(y as usize), &' ');
+
+                    continue;
+                }
+                // 是否点击了“程序命令”
+                match game.which_cmd_clicked(column, row) {
+                    'Q' => {
+                        execute!(std::io::stdout(), Show).unwrap();
+                        break;
+                    }
+                    //暂停游戏 / Pause
+                    'P' => {
+                        if game.status == GameStatus::Started {
+                            game.pause();
+                            ch_sender.send(TimerStatus::Pause).unwrap();
+                        }
+                    }
+                    //继续游戏 / Resume the game
+                    'R' => {
+                        if game.status == GameStatus::Paused {
+                            game.resume();
+                            ch_sender.send(TimerStatus::Resume).unwrap();
+                        }
+                    }
+                    //新开游戏 / New game with current difficulty
+                    'N' => {
+                        let lv = game.level.level;
+                        game = Game::new_game(lv);
+                        cmd.clear();
+
+                        // Stop the timer
+                        ch_sender.send(TimerStatus::Stop).unwrap();
+                    }
+                    // 换游戏难度 / Change difficulty
+                    'D' => {
+                        // stop the timer first
+                        ch_sender.send(TimerStatus::Stop).unwrap();
+                        execute!(std::io::stdout(), DisableMouseCapture)?;
+                        // 换难度 / Change difficulty
+                        game = Game::new_game(0);
+                        execute!(std::io::stdout(), EnableMouseCapture)?;
+                        cmd.clear();
+
+                        // because thanged the difficulty,the display size has also been changed automaticly.
+                        // so must inform the timer the new size.
+
+                        // get the new position that the timer will use.
+                        (x_t, y_t) = game.get_stat_time_pos();
+                        // get the lock of shared_var
+                        let mut sh_pos = shared_var.lock().unwrap();
+                        // modify the values of shared_var to inform the timer that game size has changed
+                        sh_pos.time_pos_x = x_t;
+                        sh_pos.time_pos_y = y_t;
+                        // must release the lock of shared_var
+                        drop(sh_pos);
+                    }
+                    _ => {}
                 }
             }
             // 处理鼠标右击事件 / mouse right click

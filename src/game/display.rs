@@ -121,7 +121,8 @@ impl super::Game {
             let c = 66 + i;
             print!("   {}", (c as u8) as char);
         }
-        print!("\n");
+        //print!("\n");
+        println!();
         //打印表格第一行 / Print the firest line of table
         let mut first_line: String = String::from(" ┌");
         for _i in 0..col - 1 {
@@ -215,6 +216,7 @@ impl super::Game {
         }
 
         self.move_to(x3, y3_ + 6);
+        print!("\x1B[31m");
         print!("!Q-Quit       退出");
         self.move_to(x3, y3_ + 7);
         print!("!P-Pause      暂停");
@@ -224,6 +226,7 @@ impl super::Game {
         print!("!N-New        重玩");
         self.move_to(x3, y3_ + 10);
         print!("!D-Difficulty换难度");
+        print!("\x1B[0m");
         self.stdout.flush().unwrap();
     }
     // display the input char at Input area.
