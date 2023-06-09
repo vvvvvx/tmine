@@ -83,30 +83,7 @@ impl super::Game {
             (self.level.rows) as u16,
         )
     }
-    // 哪条红色命令被左击，返回命令字符
-    pub fn which_cmd_clicked(&mut self, col: u16, row: u16) -> char {
-        let x_left = (4 * self.level.cols + 6) as u16;
-        let x_right: u16 = x_left + 18;
-        // quit命令显示所在的Y坐标
-        let y_quit: u16 = match self.level.level {
-            1 => 12,
-            2 => 14,
-            _ => 16,
-        };
-        // col位置不在红色cmd区域，直接返回
-        if !(col >= x_left && col <= x_right) {
-            return 'X';
-        }
-        // row位置离Quit cmd行的偏差
-        match row - y_quit {
-            0 => 'Q', // Quit
-            1 => 'P', // Pause
-            2 => 'R', // Resume
-            3 => 'N', // New
-            4 => 'D', // Difficulty
-            _ => 'X', // Not cmd
-        }
-    }
+
     pub fn move_to(&mut self, col: u16, row: u16) {
         self.stdout.queue(cursor::MoveTo(col, row)).unwrap();
     }
@@ -137,5 +114,30 @@ impl super::Game {
             x as i16
         };
         (y_, x_)
+    }
+
+    // 哪条红色命令被左击，返回命令字符
+    pub fn which_cmd_clicked(&mut self, col: u16, row: u16) -> char {
+        let x_left = (4 * self.level.cols + 6) as u16;
+        let x_right: u16 = x_left + 18;
+        // quit命令显示所在的Y坐标
+        let y_quit: u16 = match self.level.level {
+            1 => 12,
+            2 => 14,
+            _ => 16,
+        };
+        // col位置不在红色cmd区域，直接返回
+        if !(col >= x_left && col <= x_right) {
+            return 'X';
+        }
+        // row位置离Quit cmd行的偏差
+        match row - y_quit {
+            0 => 'Q', // Quit
+            1 => 'P', // Pause
+            2 => 'R', // Resume
+            3 => 'N', // New
+            4 => 'D', // Difficulty
+            _ => 'X', // Not cmd
+        }
     }
 }
