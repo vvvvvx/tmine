@@ -121,6 +121,7 @@ Simple Operate example:
 
     Mark the cell mine
 3. 左击红色命令 / Left click Red-CMD
+   
    鼠标左击界面右下红色命令，可直接执行。
 ![red-cmd](/red-cmd.png)
 # tmine
