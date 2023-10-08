@@ -84,10 +84,10 @@ impl Level {
         let mut num = Level::input();
         //while num < 0 || num > 4 {
         while !(0..=4).contains(&num) {
-            if num > 4 {
-                println!("请输入0-4以内的数，以确定难度级别");
-                //println!("Please input number between 0-4");
-            }
+            //if num > 4 || num < 0 {
+            println!("请输入0-4以内的数，以确定难度级别");
+            //println!("Please input number between 0-4");
+            //}
             num = Level::input();
         }
         if num == 0 {

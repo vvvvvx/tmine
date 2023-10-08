@@ -153,8 +153,8 @@ impl Game {
                             let max_x = if (*x + 2) > cols { cols } else { *x + 2 };
                             let max_y = if (*y + 2) > rows { rows } else { *y + 2 };
 
-                            for yy in min_y as usize..max_y {
-                                for xx in min_x as usize..max_x {
+                            for yy in min_y ..max_y {
+                                for xx in min_x ..max_x {
                                     if self.mine_table[yy][xx].status == Status::Unexplored
                                         && !(xx == *x && yy == *y)
                                     {
@@ -186,8 +186,8 @@ impl Game {
 
                         let mut sum_mines = 0;
                         //计算周围标记的雷个数 / calculate surrounding mines
-                        for yy in min_y as usize..max_y {
-                            for xx in min_x as usize..max_x {
+                        for yy in min_y ..max_y {
+                            for xx in min_x ..max_x {
                                 if self.mine_table[yy][xx].status == Status::Flaged {
                                     sum_mines += 1;
                                 }
@@ -196,8 +196,8 @@ impl Game {
                         // 如果标记的数量等于单元格总雷数，则把除标记之外的单元格都打开
                         // if cell's surrounding mines== cell.surrnd_mine, dig open the left unopened cells surrounding.
                         if self.mine_table[*y][*x].surrnd_mines == sum_mines {
-                            for yy in min_y as usize..max_y {
-                                for xx in min_x as usize..max_x {
+                            for yy in min_y ..max_y {
+                                for xx in min_x ..max_x {
                                     if self.mine_table[yy][xx].status != Status::Flaged
                                         && !(xx == *x && yy == *y)
                                     {

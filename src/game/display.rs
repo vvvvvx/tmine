@@ -160,7 +160,7 @@ impl super::Game {
         let c = 65 + row - 1;
         print!("{}", (c as u8) as char); //打印最后一行左侧行序号 / Print the last line's row number on the left
         self.stdout.write_all(jj_line.as_bytes()).unwrap();
-        print!("{}\n", (c as u8) as char); //打印最后一行右侧行序号 / Print the last line's row number on the right
+        println!("{}", (c as u8) as char); //打印最后一行右侧行序号 / Print the last line's row number on the right
         self.stdout.write_all(bot_line.as_bytes()).unwrap();
         //打印底边列号 / Print the column nubmer on bottom.
         print!("   {}", (65) as char);
@@ -168,7 +168,7 @@ impl super::Game {
             let c = 66 + i;
             print!("   {}", (c as u8) as char);
         }
-        print!("\n");
+        println!();
 
         //打印提示信息 / Print statistics info
         let (x, y) = self.get_stat_mine_pos();
