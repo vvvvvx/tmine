@@ -106,6 +106,162 @@ impl Game {
             }
         }
     }
+
+    pub fn dig_unexplored_cell(&mut self, x: &usize, y: &usize, cmd: &char) {
+        //未开状态
+        match cmd {
+            // 标记命令 / Flag cmd
+            'F' => {
+                self.mine_table[*y][*x].status = Status::Flaged;
+                self.mines_left -= 1; //余雷减1
+                self.refresh_cell(x, y);
+                self.update_mine_left_disp(); //更新余雷数量显示
+            }
+            //存疑标记 / Pending cmd
+            'P' => {
+                self.mine_table[*y][*x].status = Status::Pending;
+                self.refresh_cell(x, y);
+            }
+            //挖开命令 / Dig cmd
+            'D' | ' ' | '\n' => {
+                //D、Space、Enter
+                self.mine_table[*y][*x].status = Status::Opened; //修改会未开
+                                                                 //修改单元格界面
+                self.refresh_cell(x, y);
+                if self.mine_table[*y][*x].is_mine {
+                    //self.failed(); //触发爆炸，程序结束 /if digged mine ,game over
+                    return;
+                }
+                if self.mine_table[*y][*x].surrnd_mines == 0 {
+                    //递归翻开周围单元格 / if surrnd_mines=0 recursive dig its surrounding cells
+                    //限定数组边界 / limit the index range
+
+                    let min_x = if *x == 0 { 0 } else { *x - 1 };
+                    let min_y = if *y == 0 { 0 } else { *y - 1 };
+
+                    let cols = self.level.cols;
+                    let rows = self.level.rows;
+
+                    let max_x = if (*x + 2) > cols { cols } else { *x + 2 };
+                    let max_y = if (*y + 2) > rows { rows } else { *y + 2 };
+
+                    for yy in min_y..max_y {
+                        for xx in min_x..max_x {
+                            if self.mine_table[yy][xx].status == Status::Unexplored
+                                && !(xx == *x && yy == *y)
+                            {
+                                self.dig_cell(&(xx), &(yy), &'D');
+                            }
+                        }
+                    }
+                }
+            }
+            // 其他不做处理，T-Test命令此处无效 / Test cmd is no use in this condition
+            _ => {} //Test Openator 'T' can't use in this case
+        }
+    }
+
+    pub fn dig_opened_cell(&mut self, x: &usize, y: &usize, cmd: &char) {
+        match cmd {
+            // 测试命令 /Test cmd
+            'T' | '\n' | ' ' => {
+                //Test:如果测试周围Flag数量==srrnd_mines,则把周围未开的的全开
+
+                // index最小范围不能比0还小
+                let min_x = if *x == 0 { 0 } else { *x - 1 };
+                let min_y = if *y == 0 { 0 } else { *y - 1 };
+
+                let cols = self.level.cols;
+                let rows = self.level.rows;
+                // index最大范围，不能比level最大值还大
+                let max_x = if (*x + 2) > cols { cols } else { *x + 2 };
+                let max_y = if (*y + 2) > rows { rows } else { *y + 2 };
+
+                let mut sum_mines = 0;
+                //计算周围标记的雷个数 / calculate surrounding mines
+                for yy in min_y..max_y {
+                    for xx in min_x..max_x {
+                        if self.mine_table[yy][xx].status == Status::Flaged {
+                            sum_mines += 1;
+                        }
+                    }
+                }
+                // 如果标记的数量等于单元格总雷数，则把除标记之外的单元格都打开
+                // if cell's surrounding mines== cell.surrnd_mine, dig open the left unopened cells surrounding.
+                if self.mine_table[*y][*x].surrnd_mines == sum_mines {
+                    for yy in min_y..max_y {
+                        for xx in min_x..max_x {
+                            if self.mine_table[yy][xx].status != Status::Flaged
+                                && !(xx == *x && yy == *y)
+                            {
+                                if self.mine_table[yy][xx].surrnd_mines > 0 {
+                                    self.mine_table[yy][xx].status = Status::Opened;
+                                    self.refresh_cell(&xx, &yy);
+                                } else {
+                                    // 如果打开的单元格雷数为0,则递归展开
+                                    // if cell.surrnd_mines==0,recursive dig the cell
+                                    self.dig_cell(&xx, &yy, &'D');
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Other cmd,do nothing
+            _ => {}
+        }
+    }
+
+    pub fn dig_flaged_cell(&mut self, x: &usize, y: &usize, cmd: &char) {
+        match cmd {
+            // 挖开命令 / Dig cmd
+            'D' => {
+                // 强制撬开 / Although it has been marked as a mine,  still forcibly open
+                self.mine_table[*y][*x].status = Status::Unexplored;
+                self.dig_cell(x, y, &'D');
+            }
+            // Flag cmd
+            'F' => {
+                // 取消标记 / been flaged,now unflag it.
+                self.mine_table[*y][*x].status = Status::Unexplored;
+                self.mines_left += 1;
+                self.refresh_cell(x, y);
+                self.update_mine_left_disp(); //更新余雷数量显示
+            }
+            // Pending cmd
+            'P' => {
+                // 重新标记为Pending  / been flaged ,now re-mark it as pending
+                self.mine_table[*y][*x].status = Status::Pending;
+                self.refresh_cell(x, y);
+            }
+
+            // Other cmd,do nothing
+            _ => {}
+        }
+    }
+
+    pub fn dig_pending_cell(&mut self, x: &usize, y: &usize, cmd: &char) {
+        match cmd {
+            // Dig cmd
+            'D' | '\n' | ' ' => {
+                //打开
+                self.mine_table[*y][*x].status = Status::Unexplored;
+                self.dig_cell(x, y, &'D');
+            }
+            //标记 / Flag it
+            'F' => {
+                self.mine_table[*y][*x].status = Status::Flaged;
+                self.refresh_cell(x, y);
+            }
+            'P' => {
+                self.mine_table[*y][*x].status = Status::Unexplored;
+                self.refresh_cell(x, y);
+            }
+            // Other cmd,do nothing
+            _ => {}
+        }
+    }
+
     // 翻开单元格 / Dig cell function
     // x、y为mine_arr数组index坐标
     // x y is the mine array's index
@@ -113,159 +269,12 @@ impl Game {
         if *x >= self.level.cols || *y >= self.level.rows {
             return;
         }
+        //根据单元格状态 / depend on cell's status
         match self.mine_table[*y][*x].status {
-            //根据单元格状态 / depend on cell's status
-            Status::Unexplored => {
-                //未开状态
-                match cmd {
-                    // 标记命令 / Flag cmd
-                    'F' => {
-                        self.mine_table[*y][*x].status = Status::Flaged;
-                        self.mines_left -= 1; //余雷减1
-                        self.refresh_cell(x, y);
-                        self.update_mine_left_disp(); //更新余雷数量显示
-                    }
-                    //存疑标记 / Pending cmd
-                    'P' => {
-                        self.mine_table[*y][*x].status = Status::Pending;
-                        self.refresh_cell(x, y);
-                    }
-                    //挖开命令 / Dig cmd
-                    'D' | ' ' | '\n' => {
-                        //D、Space、Enter
-                        self.mine_table[*y][*x].status = Status::Opened; //修改会未开
-                                                                         //修改单元格界面
-                        self.refresh_cell(x, y);
-                        if self.mine_table[*y][*x].is_mine {
-                            //self.failed(); //触发爆炸，程序结束 /if digged mine ,game over
-                            return;
-                        }
-                        if self.mine_table[*y][*x].surrnd_mines == 0 {
-                            //递归翻开周围单元格 / if surrnd_mines=0 recursive dig its surrounding cells
-                            //限定数组边界 / limit the index range
-
-                            let min_x = if *x == 0 { 0 } else { *x - 1 };
-                            let min_y = if *y == 0 { 0 } else { *y - 1 };
-
-                            let cols = self.level.cols;
-                            let rows = self.level.rows;
-
-                            let max_x = if (*x + 2) > cols { cols } else { *x + 2 };
-                            let max_y = if (*y + 2) > rows { rows } else { *y + 2 };
-
-                            for yy in min_y ..max_y {
-                                for xx in min_x ..max_x {
-                                    if self.mine_table[yy][xx].status == Status::Unexplored
-                                        && !(xx == *x && yy == *y)
-                                    {
-                                        self.dig_cell(&(xx), &(yy), &'D');
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    // 其他不做处理，T-Test命令此处无效 / Test cmd is no use in this condition
-                    _ => {} //Test Openator 'T' can't use in this case
-                }
-            } //Status Unexplored
-            Status::Opened => {
-                match cmd {
-                    // 测试命令 /Test cmd
-                    'T' | '\n' | ' ' => {
-                        //Test:如果测试周围Flag数量==srrnd_mines,则把周围未开的的全开
-
-                        // index最小范围不能比0还小
-                        let min_x = if *x == 0 { 0 } else { *x - 1 };
-                        let min_y = if *y == 0 { 0 } else { *y - 1 };
-
-                        let cols = self.level.cols;
-                        let rows = self.level.rows;
-                        // index最大范围，不能比level最大值还大
-                        let max_x = if (*x + 2) > cols { cols } else { *x + 2 };
-                        let max_y = if (*y + 2) > rows { rows } else { *y + 2 };
-
-                        let mut sum_mines = 0;
-                        //计算周围标记的雷个数 / calculate surrounding mines
-                        for yy in min_y ..max_y {
-                            for xx in min_x ..max_x {
-                                if self.mine_table[yy][xx].status == Status::Flaged {
-                                    sum_mines += 1;
-                                }
-                            }
-                        }
-                        // 如果标记的数量等于单元格总雷数，则把除标记之外的单元格都打开
-                        // if cell's surrounding mines== cell.surrnd_mine, dig open the left unopened cells surrounding.
-                        if self.mine_table[*y][*x].surrnd_mines == sum_mines {
-                            for yy in min_y ..max_y {
-                                for xx in min_x ..max_x {
-                                    if self.mine_table[yy][xx].status != Status::Flaged
-                                        && !(xx == *x && yy == *y)
-                                    {
-                                        if self.mine_table[yy][xx].surrnd_mines > 0 {
-                                            self.mine_table[yy][xx].status = Status::Opened;
-                                            self.refresh_cell(&xx, &yy);
-                                        } else {
-                                            // 如果打开的单元格雷数为0,则递归展开
-                                            // if cell.surrnd_mines==0,recursive dig the cell
-                                            self.dig_cell(&xx, &yy, &'D');
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    // Other cmd,do nothing
-                    _ => {}
-                }
-            }
-            Status::Flaged => {
-                match cmd {
-                    // 挖开命令 / Dig cmd
-                    'D' => {
-                        // 强制撬开 / Although it has been marked as a mine,  still forcibly open
-                        self.mine_table[*y][*x].status = Status::Unexplored;
-                        self.dig_cell(x, y, &'D');
-                    }
-                    // Flag cmd
-                    'F' => {
-                        // 取消标记 / been flaged,now unflag it.
-                        self.mine_table[*y][*x].status = Status::Unexplored;
-                        self.mines_left += 1;
-                        self.refresh_cell(x, y);
-                        self.update_mine_left_disp(); //更新余雷数量显示
-                    }
-                    // Pending cmd
-                    'P' => {
-                        // 重新标记为Pending  / been flaged ,now re-mark it as pending
-                        self.mine_table[*y][*x].status = Status::Pending;
-                        self.refresh_cell(x, y);
-                    }
-
-                    // Other cmd,do nothing
-                    _ => {}
-                }
-            }
-            Status::Pending => {
-                match cmd {
-                    // Dig cmd
-                    'D' | '\n' | ' ' => {
-                        //打开
-                        self.mine_table[*y][*x].status = Status::Unexplored;
-                        self.dig_cell(x, y, &'D');
-                    }
-                    //标记 / Flag it
-                    'F' => {
-                        self.mine_table[*y][*x].status = Status::Flaged;
-                        self.refresh_cell(x, y);
-                    }
-                    'P' => {
-                        self.mine_table[*y][*x].status = Status::Unexplored;
-                        self.refresh_cell(x, y);
-                    }
-                    // Other cmd,do nothing
-                    _ => {}
-                }
-            }
+            Status::Unexplored => self.dig_unexplored_cell(x, y, cmd),
+            Status::Opened => self.dig_opened_cell(x, y, cmd),
+            Status::Flaged => self.dig_flaged_cell(x, y, cmd),
+            Status::Pending => self.dig_pending_cell(x, y, cmd),
         } // match Status ended
           //self.success_check();
     }
