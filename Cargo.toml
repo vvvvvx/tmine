@@ -9,3 +9,9 @@ edition = "2021"
 rand = "0.7"
 crossterm = "0.26.1"
 #crossterm = { version = "0.26.1",  default-features = false, features = ["serde", "styling","styling"] }
+[profile.release]
+opt-level='z'
+lto=true
+codegen-units=1
+strip=true
+panic='abort'

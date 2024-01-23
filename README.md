@@ -1,5 +1,5 @@
 ---
-typora-root-url: ./ 
+
 ---
 
 
@@ -19,11 +19,11 @@ TMine terminal Minesweeper game,support mouse operation
 
 This is a keyboard Minesweeper game, input the row and column number of cell to operate the cell.Also support mouse operation.
 
-![difficulty](/difficulty.png)
+![difficulty](./difficulty.png)
 
-![playing](/playing.png)
+![playing](./playing.png)
 
-![success](/success.png)![failed](/failed.png)
+![success](./success.png)![failed](./failed.png)
 
 ## 命令格式/Command format
 
@@ -123,7 +123,7 @@ Simple Operate example:
 3. 左击红色命令 / Left click Red-CMD
    
    鼠标左击界面右下红色命令，可直接执行。
-![red-cmd](/red-cmd.png)
+   ![red-cmd](./red-cmd.png)
 # tmine
 
 >>>>>>> origin/main

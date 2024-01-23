@@ -264,7 +264,7 @@ impl Game {
 
     // 翻开单元格 / Dig cell function
     // x、y为mine_arr数组index坐标
-    // x y is the mine array's index
+    // x y is the mine array's index,x=col,y=row.
     pub fn dig_cell(&mut self, x: &usize, y: &usize, cmd: &char) {
         if *x >= self.level.cols || *y >= self.level.rows {
             return;
@@ -275,8 +275,8 @@ impl Game {
             Status::Opened => self.dig_opened_cell(x, y, cmd),
             Status::Flaged => self.dig_flaged_cell(x, y, cmd),
             Status::Pending => self.dig_pending_cell(x, y, cmd),
-        } // match Status ended
-          //self.success_check();
+        }
+        //self.success_check();
     }
 
     // 产生随机数
