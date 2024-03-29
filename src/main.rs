@@ -102,8 +102,7 @@ fn process_key_enter(
 
     if cmd.len() >= 2 {
         // matched the cmd length
-        //如果命令长度已满足
-        //Y坐标字母 / Row number    like ABCDEF...
+        // Row number    like ABCDEF...
 
         if cmd.chars().next().is_none() {
             cmd.clear();
@@ -117,22 +116,22 @@ fn process_key_enter(
             return Ok(());
         }
 
-        let c_y = cmd.chars().nth(0).unwrap();
-        let c_x = cmd.chars().nth(1).unwrap(); //X坐标字母 / Column number like ABCDEF...
+        let c_y = cmd.chars().nth(0).unwrap(); // Row number like ABCDEF...
+        let c_x = cmd.chars().nth(1).unwrap(); // Column number like ABCDEF...
 
         let mut c_cmd = ' ';
         if cmd.len() >= 3 {
-            c_cmd = cmd.chars().nth(2).unwrap(); //命令字符 / The cmd char,like D-Dig,F-Flag,P-Pending,T-Test
+            c_cmd = cmd.chars().nth(2).unwrap(); // The cmd char,like D-Dig,F-Flag,P-Pending,T-Test
         }
         // confirm c_x,c_y is uppercase letter
         if c_y.is_ascii_uppercase() && c_x.is_ascii_uppercase() {
             let col = c_x as usize - 65; // 65 is the char 'A'
             let row = c_y as usize - 65;
-            // 确保未超最大行列 / Ensure row and column input is below the most table index.
+            //  Ensure row and column input is below the most table index.
             if col < game.level.cols && row < game.level.rows && !game_is_pause_or_finished {
-                game.dig_cell(&col, &row, &c_cmd); //挖开此单元格 / Begin dig cell
+                game.dig_cell(&col, &row, &c_cmd); // Begin dig cell
                 if game.status == GameStatus::NotStart && (c_cmd == 'D' || c_cmd == ' ') {
-                    //如果是第一个单元格，开始计时 / if the first cmd ,start timer.
+                    // if the first cmd ,start timer.
                     game.status = GameStatus::Started;
                     ch_sender.send(TimerStatus::Start).unwrap();
                 }
@@ -141,13 +140,13 @@ fn process_key_enter(
         // !Command ,like !N=New game ,!Q=Quit,!P=Pause
         if c_y == '!' {
             match c_x {
-                //退出程序 / Quit program
+                // Quit program
                 'Q' => {
                     execute!(std::io::stdout(), Show).unwrap();
                     //break;
-                    // 显示光标 / Show cursor
+                    //  Show cursor
                     execute!(std::io::stdout(), Show).unwrap();
-                    // 关闭raw mode / disable raw mode
+                    //  disable raw mode
                     disable_raw_mode().expect("Failed to enable raw mode");
                     execute!(std::io::stdout(), DisableMouseCapture)?;
                     let (_, y) = game.get_cmd_pos();
@@ -155,21 +154,21 @@ fn process_key_enter(
 
                     exit(0);
                 }
-                //暂停游戏 / Pause
+                // Pause
                 'P' => {
                     if game.status == GameStatus::Started {
                         game.pause();
                         ch_sender.send(TimerStatus::Pause).unwrap();
                     }
                 }
-                //继续游戏 / Resume the game
+                // Resume the game
                 'R' => {
                     if game.status == GameStatus::Paused {
                         game.resume();
                         ch_sender.send(TimerStatus::Resume).unwrap();
                     }
                 }
-                //新开游戏 / New game with current difficulty
+                // New game with current difficulty
                 'N' => {
                     let lv = game.level.level;
                     *game = Game::new_game(lv);
@@ -182,12 +181,12 @@ fn process_key_enter(
                 'C' => {
                     game.display_err();
                 }
-                // 换游戏难度 / Change difficulty
+                //  Change difficulty
                 'D' => {
                     // stop the timer first
                     ch_sender.send(TimerStatus::Stop).unwrap();
                     execute!(std::io::stdout(), DisableMouseCapture)?;
-                    // 换难度 / Change difficulty
+                    //  Change difficulty
                     *game = Game::new_game(0);
                     execute!(std::io::stdout(), EnableMouseCapture)?;
                     cmd.clear();
@@ -277,9 +276,9 @@ fn process_mouse_left(
         game.status == GameStatus::Paused || game.status == GameStatus::Finished;
     let (y, x) = game.pos_to_index(*row, *column);
     if y >= 0 && x >= 0 && !game_is_pause_or_finished {
-        //如果是第一个单元格，开始计时 / if the first cmd ,start timer.
+        // if the first cmd ,start timer.
         if game.status == GameStatus::NotStart {
-            //开始计时 / Start timer
+            // Start timer
             game.status = GameStatus::Started;
             ch_sender.send(TimerStatus::Start).unwrap();
         }
@@ -292,30 +291,30 @@ fn process_mouse_left(
     match game.which_cmd_clicked(*column, *row) {
         'Q' => {
             execute!(std::io::stdout(), Show).unwrap();
-            // 显示光标 / Show cursor
+            //  Show cursor
             execute!(std::io::stdout(), Show).unwrap();
-            // 关闭raw mode / disable raw mode
+            //  disable raw mode
             disable_raw_mode().expect("Failed to enable raw mode");
             execute!(std::io::stdout(), DisableMouseCapture)?;
             let (_, y) = game.get_cmd_pos();
             game.move_to(0, y + 2);
             exit(0);
         }
-        //暂停游戏 / Pause
+        // Pause
         'P' => {
             if game.status == GameStatus::Started {
                 game.pause();
                 ch_sender.send(TimerStatus::Pause).unwrap();
             }
         }
-        //继续游戏 / Resume the game
+        // Resume the game
         'R' => {
             if game.status == GameStatus::Paused {
                 game.resume();
                 ch_sender.send(TimerStatus::Resume).unwrap();
             }
         }
-        //新开游戏 / New game with current difficulty
+        // New game with current difficulty
         'N' => {
             let lv = game.level.level;
             *game = Game::new_game(lv);
@@ -324,12 +323,12 @@ fn process_mouse_left(
             // Stop the timer
             ch_sender.send(TimerStatus::Stop).unwrap();
         }
-        // 换游戏难度 / Change difficulty
+        //  Change difficulty
         'D' => {
             // stop the timer first
             ch_sender.send(TimerStatus::Stop).unwrap();
             execute!(std::io::stdout(), DisableMouseCapture)?;
-            // 换难度 / Change difficulty
+            //  Change difficulty
             *game = Game::new_game(0);
             execute!(std::io::stdout(), EnableMouseCapture)?;
             cmd.clear();
@@ -355,12 +354,11 @@ fn main() -> io::Result<()> {
     let mut game = Game::new_game(0);
     let mut cmd: String = String::new();
     let update_interval = Duration::from_secs(1); //update time consuming interval.
-                                                  //隐藏光标 / Hide cursor
+                                                  // Hide cursor
     execute!(std::io::stdout(), Hide).unwrap();
-    //开启raw mode,监听键盘输入 / enable raw mode to listen keyboard input.
+    // enable raw mode to listen keyboard input.
     enable_raw_mode().expect("Failed to enable raw mode");
     execute!(std::io::stdout(), EnableMouseCapture)?;
-    // 创建一个通信通道，用于主线程向子线程发送 timer status 变量
     // Create a channel to control the timer by main thread.
     let (ch_sender, ch_receiver): (Sender<TimerStatus>, Receiver<TimerStatus>) = channel();
 
@@ -378,7 +376,6 @@ fn main() -> io::Result<()> {
     // Create a timer
     let mut timer = Timer::new();
 
-    // 启动一个子线程，用于更新耗时信息
     // run a timer thread to update time consuming
     thread::spawn(move || -> ! {
         loop {
@@ -407,7 +404,6 @@ fn main() -> io::Result<()> {
             }
             // get the lock of shared_var
             let sh_pos = shared_var_clone.lock().unwrap();
-            // 检查是否到了定时器的时间间隔，如果是则更新时间并输出到屏幕上
             // refresh time consuming
             let elapsed = timer.last.elapsed();
             if elapsed >= update_interval && timer.is_running {
@@ -417,7 +413,6 @@ fn main() -> io::Result<()> {
             }
             //must release the lock of shared_var
             drop(sh_pos);
-            // 程序休眠 100 毫秒，以减少 CPU 资源的消耗
             // sleep to reduce the CPU consuming
             sleep(Duration::from_millis(100));
         }
@@ -427,15 +422,13 @@ fn main() -> io::Result<()> {
     loop {
         //cursor to cmd input postion
         let ev = read().expect("Failed to read event");
-        let game_is_pause_or_finished =
-            game.status == GameStatus::Paused || game.status == GameStatus::Finished;
+
         match ev {
             Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
                 kind,
                 ..
             }) => {
-                // 按下一个键会同时发送Press和Release两个Event,所以会收到重复字符，仅接收Press事件类型。
                 // when press a key,will send Press and Release 2 events ,so one char will repeat
                 // two times,to avoid it here only deal with the Press event, do nothing when key released.
                 if kind == KeyEventKind::Release {
@@ -468,6 +461,8 @@ fn main() -> io::Result<()> {
             Event::Key(KeyEvent {
                 code: KeyCode::Esc, ..
             }) => {
+                let game_is_pause_or_finished =
+                    game.status == GameStatus::Paused || game.status == GameStatus::Finished;
                 // cancel reverse
                 if !game_is_pause_or_finished {
                     let (row, col) = game.get_row_col_from_str(&cmd);
@@ -480,7 +475,7 @@ fn main() -> io::Result<()> {
                 }
                 cmd.clear();
             }
-            //鼠标左击事件 / mouse left click
+            // mouse left click
             Event::Mouse(MouseEvent {
                 kind: MouseEventKind::Down(MouseButton::Left),
                 column,
@@ -489,13 +484,15 @@ fn main() -> io::Result<()> {
             }) => {
                 process_mouse_left(&mut game, &mut cmd, &shared_var, &ch_sender, &column, &row)?;
             }
-            // 处理鼠标右击事件 / mouse right click
+            // mouse right click
             Event::Mouse(MouseEvent {
                 kind: MouseEventKind::Down(MouseButton::Right),
                 column,
                 row,
                 ..
             }) => {
+                let game_is_pause_or_finished =
+                    game.status == GameStatus::Paused || game.status == GameStatus::Finished;
                 let (y, x) = game.pos_to_index(row, column);
                 if y >= 0 && x >= 0 && !game_is_pause_or_finished {
                     // Right click=Flag
@@ -512,9 +509,9 @@ fn main() -> io::Result<()> {
             game.status = GameStatus::Finished;
         }
     }
-    // 显示光标 / Show cursor
+    //  Show cursor
     //execute!(std::io::stdout(), Show).unwrap();
-    // 关闭raw mode / disable raw mode
+    //  disable raw mode
     //disable_raw_mode().expect("Failed to enable raw mode");
     //execute!(std::io::stdout(), DisableMouseCapture)?;
     //let (_, y) = game.get_cmd_pos();
