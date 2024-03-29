@@ -4,7 +4,6 @@ impl super::Game {
     pub fn get_row_from_char(&self, c: &char) -> i16 {
         let c1 = c.to_ascii_uppercase();
 
-        //if !(c1 >= 'A' && c1 <= 'Z') {
         if !c1.is_ascii_uppercase() {
             return -1;
         }
@@ -19,7 +18,6 @@ impl super::Game {
     pub fn get_col_from_char(&self, c: &char) -> i16 {
         let c1 = c.to_ascii_uppercase();
 
-        //if !(c1 >= 'A' && c1 <= 'Z') {
         if !c1.is_ascii_uppercase() {
             return -1;
         }
@@ -36,9 +34,7 @@ impl super::Game {
         if len == 0 {
             return (-1, -1);
         }
-        //let c1 = cmd.chars().nth(0).unwrap();
         let c1 = cmd.chars().next().unwrap();
-        //if !(c1 >= 'A' && c1 <= 'Z') {
         if !c1.is_ascii_uppercase() {
             return (-1, -1);
         }

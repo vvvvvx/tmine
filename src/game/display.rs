@@ -364,7 +364,6 @@ impl super::Game {
             }
             Status::Unexplored => {
                 // unexplored ,with green BG
-                //print!("   ");
                 print!("\x1b[42m   \x1B[0m");
             } //_=>{ }
         }

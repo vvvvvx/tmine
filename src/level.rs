@@ -76,18 +76,13 @@ impl Level {
         //level==4 高级/Advanced
 
         print!("\n请选择难度级别|Select difficulty:\n\n   1--新手|Beginner      8x10  [  7 雷|Mines ]\n   2--初级|Basic         9x14  [ 15 雷|Mines ]\n   3--中级|Intermediate 15x20  [ 40 雷|Mines ]\n   4--高级|Advanced     19x26  [ 99 雷|Mines ]\n\n   0--退出|Quit\n\n请选择|Your choice:");
-        // print!("\nPlease select the difficult level:\n   1--Beginner 8x10 [  7Mines ]\n   2--Basic....")
 
         if io::stdout().flush().is_err() {
             println!("flush err");
         };
         let mut num = Level::input();
-        //while num < 0 || num > 4 {
         while !(0..=4).contains(&num) {
-            //if num > 4 || num < 0 {
             println!("请输入0-4以内的数，以确定难度级别");
-            //println!("Please input number between 0-4");
-            //}
             num = Level::input();
         }
         if num == 0 {
