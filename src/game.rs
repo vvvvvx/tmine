@@ -3,6 +3,7 @@ pub mod position;
 
 use super::{cell::*, level::Level};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+// use once_cell::sync::Lazy;
 use rand::Rng;
 use std::{
     io::{self, stdout, Stdout, Write},
@@ -309,11 +310,13 @@ impl Game {
                 self.stdout.flush().unwrap();
             }
         }
+        self.display_pause();
         self.status = GameStatus::Paused;
     }
 
     // Restore the paused game
     pub fn resume(&mut self) {
+        self.draw_ui();
         self.display_refresh();
         self.status = GameStatus::Started;
     }

@@ -105,11 +105,20 @@ impl super::Game {
         print!("\x1B[32m\x1B[5m\x1B[1mYou won !\n\x1B[0m");
         self.stdout.flush().unwrap();
     }
+    pub(super) fn display_pause(&mut self) {
+        //self.update_mine_left_disp();
+        let (x, y) = self.get_table_mid_pos(); // get the center position of the table UI.
+        self.move_to(x - 3, y - 1);
+        print!("\x1B[32m\x1B[5m\x1B[1m暂停中!\x1B[0m");
+        self.move_to(x - 3, y);
+        print!("\x1B[32m\x1B[5m\x1B[1mPaused!\x1B[0m");
+        self.stdout.flush().unwrap();
+    }
     //绘制界面 / Draw mine table on terminal UI
     pub(super) fn draw_ui(&mut self) {
         let row = self.level.rows;
         let col = self.level.cols;
-
+        disable_raw_mode().expect("Failed to enable raw mode");
         // 清屏 / clear screen
         self.stdout
             .queue(terminal::Clear(terminal::ClearType::All))
@@ -228,6 +237,8 @@ impl super::Game {
         print!("!D-Difficulty换难度");
         print!("\x1B[0m");
         self.stdout.flush().unwrap();
+
+        enable_raw_mode().expect("Failed to enable raw mode");
     }
     // display the input char at Input area.
     pub fn echo_cmd(&mut self, cmd: &String) {

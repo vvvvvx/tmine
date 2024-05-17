@@ -420,7 +420,6 @@ fn main() -> io::Result<()> {
 
     // Main thread loop
     loop {
-        //cursor to cmd input postion
         let ev = read().expect("Failed to read event");
 
         match ev {
